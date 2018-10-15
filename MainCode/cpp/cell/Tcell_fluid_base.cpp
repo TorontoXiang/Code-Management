@@ -467,46 +467,46 @@ vec3D Tcell_fluid_base::shape_function_interpolate(vec3D std_coordinate,string n
 }
 void Tcell_fluid_base::calculate_velocity_gradient(vec3D &dvx,vec3D &dvy,vec3D &dvz)
 {
-	vec3D nf[6],vf[6];
-	double sf[6];
-	double s1,s2,s3,s4;
-	vec3D n1,n2,n3,n4;
-	for (int i=0;i<4;i++)
-	{
-		area(_cell_polyhedron.G_vertex(i+8),_cell_polyhedron.G_vertex(i),_cell_polyhedron.G_vertex((i+1)%4),s1,n1);
-		area(_cell_polyhedron.G_vertex(i+8),_cell_polyhedron.G_vertex((i+1)%4),_cell_polyhedron.G_vertex((i+5)%4+4),s2,n2);
-		area(_cell_polyhedron.G_vertex(i+8),_cell_polyhedron.G_vertex((i+5)%4+4),_cell_polyhedron.G_vertex(i+4),s3,n3);
-		area(_cell_polyhedron.G_vertex(i+8),_cell_polyhedron.G_vertex(i+4),_cell_polyhedron.G_vertex(i),s4,n4);
-		sf[i]=s1+s2+s3+s4;
-		nf[i]=(n1*s1+n2*s2+n3*s3+n4*s4)/sf[i];
-		vf[i]=(_node_ptr[i]->_velocity+_node_ptr[(i+1)%4]->_velocity+_node_ptr[(i+5)%4+4]->_velocity+_node_ptr[i+4]->_velocity)*0.25;
-	}
-	area(_cell_polyhedron.G_vertex(12),_cell_polyhedron.G_vertex(0),_cell_polyhedron.G_vertex(3),s1,n1);
-	area(_cell_polyhedron.G_vertex(12),_cell_polyhedron.G_vertex(3),_cell_polyhedron.G_vertex(2),s2,n2);
-	area(_cell_polyhedron.G_vertex(12),_cell_polyhedron.G_vertex(2),_cell_polyhedron.G_vertex(1),s3,n3);
-	area(_cell_polyhedron.G_vertex(12),_cell_polyhedron.G_vertex(1),_cell_polyhedron.G_vertex(0),s4,n4);
-	sf[4]=s1+s2+s3+s4;
-	nf[4]=(n1*s1+n2*s2+n3*s3+n4*s4)/sf[4];
-	vf[4]=(_node_ptr[0]->_velocity+_node_ptr[1]->_velocity+_node_ptr[2]->_velocity+_node_ptr[3]->_velocity)*0.25;
-	area(_cell_polyhedron.G_vertex(13),_cell_polyhedron.G_vertex(4),_cell_polyhedron.G_vertex(5),s1,n1);
-	area(_cell_polyhedron.G_vertex(13),_cell_polyhedron.G_vertex(5),_cell_polyhedron.G_vertex(6),s2,n2);
-	area(_cell_polyhedron.G_vertex(13),_cell_polyhedron.G_vertex(6),_cell_polyhedron.G_vertex(7),s3,n3);
-	area(_cell_polyhedron.G_vertex(13),_cell_polyhedron.G_vertex(7),_cell_polyhedron.G_vertex(4),s4,n4);
-	sf[5]=s1+s2+s3+s4;
-	nf[5]=(n1*s1+n2*s2+n3*s3+n4*s4)/sf[5];
-	vf[5]=(_node_ptr[4]->_velocity+_node_ptr[5]->_velocity+_node_ptr[6]->_velocity+_node_ptr[7]->_velocity)*0.25;
-	dvx.value(0,0,0);
-	dvz=dvy=dvx;
-	for (int i=0;i<6;i++)
-	{
-		dvx=dvx+nf[i]*sf[i]*vf[i].x;
-		dvy=dvy+nf[i]*sf[i]*vf[i].y;
-		dvz=dvz+nf[i]*sf[i]*vf[i].z;
-	}
-	dvx=dvx/_cell_volume;
-	dvy=dvy/_cell_volume;
-	dvz=dvz/_cell_volume;
-	return;
+	//vec3D nf[6],vf[6];
+	//double sf[6];
+	//double s1,s2,s3,s4;
+	//vec3D n1,n2,n3,n4;
+	//for (int i=0;i<4;i++)
+	//{
+	//	area(_cell_polyhedron.G_vertex(i+8),_cell_polyhedron.G_vertex(i),_cell_polyhedron.G_vertex((i+1)%4),s1,n1);
+	//	area(_cell_polyhedron.G_vertex(i+8),_cell_polyhedron.G_vertex((i+1)%4),_cell_polyhedron.G_vertex((i+5)%4+4),s2,n2);
+	//	area(_cell_polyhedron.G_vertex(i+8),_cell_polyhedron.G_vertex((i+5)%4+4),_cell_polyhedron.G_vertex(i+4),s3,n3);
+	//	area(_cell_polyhedron.G_vertex(i+8),_cell_polyhedron.G_vertex(i+4),_cell_polyhedron.G_vertex(i),s4,n4);
+	//	sf[i]=s1+s2+s3+s4;
+	//	nf[i]=(n1*s1+n2*s2+n3*s3+n4*s4)/sf[i];
+	//	vf[i]=(_node_ptr[i]->_velocity+_node_ptr[(i+1)%4]->_velocity+_node_ptr[(i+5)%4+4]->_velocity+_node_ptr[i+4]->_velocity)*0.25;
+	//}
+	//area(_cell_polyhedron.G_vertex(12),_cell_polyhedron.G_vertex(0),_cell_polyhedron.G_vertex(3),s1,n1);
+	//area(_cell_polyhedron.G_vertex(12),_cell_polyhedron.G_vertex(3),_cell_polyhedron.G_vertex(2),s2,n2);
+	//area(_cell_polyhedron.G_vertex(12),_cell_polyhedron.G_vertex(2),_cell_polyhedron.G_vertex(1),s3,n3);
+	//area(_cell_polyhedron.G_vertex(12),_cell_polyhedron.G_vertex(1),_cell_polyhedron.G_vertex(0),s4,n4);
+	//sf[4]=s1+s2+s3+s4;
+	//nf[4]=(n1*s1+n2*s2+n3*s3+n4*s4)/sf[4];
+	//vf[4]=(_node_ptr[0]->_velocity+_node_ptr[1]->_velocity+_node_ptr[2]->_velocity+_node_ptr[3]->_velocity)*0.25;
+	//area(_cell_polyhedron.G_vertex(13),_cell_polyhedron.G_vertex(4),_cell_polyhedron.G_vertex(5),s1,n1);
+	//area(_cell_polyhedron.G_vertex(13),_cell_polyhedron.G_vertex(5),_cell_polyhedron.G_vertex(6),s2,n2);
+	//area(_cell_polyhedron.G_vertex(13),_cell_polyhedron.G_vertex(6),_cell_polyhedron.G_vertex(7),s3,n3);
+	//area(_cell_polyhedron.G_vertex(13),_cell_polyhedron.G_vertex(7),_cell_polyhedron.G_vertex(4),s4,n4);
+	//sf[5]=s1+s2+s3+s4;
+	//nf[5]=(n1*s1+n2*s2+n3*s3+n4*s4)/sf[5];
+	//vf[5]=(_node_ptr[4]->_velocity+_node_ptr[5]->_velocity+_node_ptr[6]->_velocity+_node_ptr[7]->_velocity)*0.25;
+	//dvx.value(0,0,0);
+	//dvz=dvy=dvx;
+	//for (int i=0;i<6;i++)
+	//{
+	//	dvx=dvx+nf[i]*sf[i]*vf[i].x;
+	//	dvy=dvy+nf[i]*sf[i]*vf[i].y;
+	//	dvz=dvz+nf[i]*sf[i]*vf[i].z;
+	//}
+	//dvx=dvx/_cell_volume;
+	//dvy=dvy/_cell_volume;
+	//dvz=dvz/_cell_volume;
+	//return;
 }
 int Tcell_fluid_base::vertex_reverse(int nid)
 {

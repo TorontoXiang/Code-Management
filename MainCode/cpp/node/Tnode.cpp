@@ -137,7 +137,7 @@ void Tnode::accumulate_inertance(double mass)
 	_mass0=_mass0+mass;
 	return;
 }
-void Tnode::accumulate_moment(vec3D& moment)
+void Tnode::accumulate_moment(vec3D moment)
 {
 	_moment=_moment+moment;
 	return;

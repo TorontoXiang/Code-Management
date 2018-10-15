@@ -15,5 +15,7 @@ protected:
 	//Calculate the value and derivatives of shape functions on Gausspoints
 	void get_key_variable(Tcell_fluid_base* this_cell,vec3D (dphy)[8][8],double (&det)[8],vec3D (&key)[8][8]);
 	//Calculate the key vector and determinant of Jacobi
+
 };
+
 #endif

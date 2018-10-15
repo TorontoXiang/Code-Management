@@ -73,7 +73,7 @@ protected:
 
 	void accumulate_inertance(double mass);
 	//Accumulate nodal inertance
-	void accumulate_moment(vec3D& moment);
+	void accumulate_moment(vec3D moment);
 	//Accumulate nodal moment
 	void initialize();
 	//Initialize the node variables

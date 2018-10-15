@@ -266,6 +266,7 @@ protected:
 	friend class Tcell_intersect;
 	friend class Tcell_pure_fluid;
 	friend class Tedge_viscosity;
+	friend class TFEM_fluid_viscosity;
 	friend class TFEM_viscosity;
 	friend class Tbody_Lagrangian;
 	friend class Tnode_fluid;
@@ -275,5 +276,6 @@ protected:
 	friend class Tbody_explosion;
 	friend class Tbody_MPM;
 	friend class Tbody_ALEMPM;
+	friend class Tcell_base;
 };
 #endif

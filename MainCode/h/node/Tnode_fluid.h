@@ -45,6 +45,7 @@ private:
 
 	friend class Tedge_viscosity;
 	friend class TFEM_viscosity;
+	friend class TFEM_fluid_viscosity;
 	template<class T1,class T2>
 	friend class Tinteraction_conode;
 	friend class Tgrid_smooth_continum;

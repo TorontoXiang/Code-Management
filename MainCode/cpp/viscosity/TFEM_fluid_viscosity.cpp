@@ -2,6 +2,7 @@
 #include "public_function.h"
 #include "Shape_function.h"
 #include "Gauss_weight.h"
+#
 void TFEM_fluid_viscosity::initialize_variables(double (&phy)[8][8],vec3D (&dphy)[8][8])
 {
 	int id;

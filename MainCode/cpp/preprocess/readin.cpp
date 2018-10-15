@@ -200,7 +200,7 @@ TEOS_base* generate_EOS(SEOS EOS,Smaterial mat)
 }
 TMAT_base* generate_material(Smaterial mat,SEOS EOS,int type)
 {
-	TMAT_base* mat_ptr;
+	TMAT_base* mat_ptr=NULL;
 	if (mat.material_type=="*MAT_ELASTIC")
 	{
 		if (type==1)
@@ -252,7 +252,7 @@ TMAT_base* generate_material(Smaterial mat,SEOS EOS,int type)
 }
 Tviscosity_base* generate_AV(Sarti_vis arti_vis)
 {
-	Tviscosity_base* av_ptr;
+	Tviscosity_base* av_ptr=NULL;
 	if (arti_vis.av_type==0)
 	{
 		Tsolid_viscosity* new_av;

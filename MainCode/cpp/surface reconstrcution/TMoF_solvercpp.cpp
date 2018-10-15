@@ -663,8 +663,8 @@ vec2D TMoF_solver::derivative_comparison(Tpolyhedron* poly_in,double fraction,ve
 	double pi=3.141592653;
 	vec3D n;
 	_volume_equation_solver.set_target_polyhedron(poly_in);
-	int i_max_error_theta,j_max_error_theta;
-	int i_max_error_phy,j_max_error_phy;
+	int i_max_error_theta=0,j_max_error_theta=0;
+	int i_max_error_phy=0,j_max_error_phy=0;
 	int n_divide=100;
 //	for (int i = 37; i < 38; i++)
 //	{
