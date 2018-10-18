@@ -5,9 +5,7 @@
 #include <fstream>
 #include <vector>
 #include "TMAT_base.h"
-#include "TEOS.h"
-#include "Tviscosity_base.h"
-#include "Tinteraction_base.h"
+#include "data_structure.h"
 using namespace std;
 class Tbody_base;
 //Temporary structure for shell
@@ -214,9 +212,9 @@ struct Skeyword
 	int num_particle_part;
 	bool is_implosion;
 	bool hourglass_option;
+	bool is_initial_vel;
 	SImplosion im;
 	SNodePerturbation im_node_perturbation;
-	bool is_initial_vel;
 	vec3D initial_vel;
 
 	void clear_keyword();
@@ -230,20 +228,8 @@ bool exam_keyword(ifstream& input); //Whether the beginning of the next function
 void next_keyword(ifstream& input); //Come to the next keyword from current position
 void next_data(ifstream& input);    //Finish this line and scape the note to the next functional line
 
-TEOS_base* generate_EOS(SEOS EOS,Smaterial mat);
-//Generate an EOS pointer
-
 TMAT_base* generate_material(Smaterial mat,SEOS EOS,int type);
 //Generate a material pointer
 //mat: the information of the material
 //type: 0:for 3D 1:for shell
-
-Tviscosity_base* generate_AV(Sarti_vis arti_vis);
-//Generate a artificial viscosity type
-
-Tinteraction_base* generate_interaction(Sinteraction interaction);
-//Generate a interaction type
-
-template<class T1,class T2> Tinteraction_base* generate_interaction_with_type(Sinteraction interaction);
-//Generate a interaction type with specific type
 #endif

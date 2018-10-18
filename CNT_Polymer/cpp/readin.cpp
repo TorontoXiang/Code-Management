@@ -2,13 +2,8 @@
 #include <string>
 #include <iostream>
 #include "public_function.h"
-#include "Tedge_viscosity.h"
-#include "TFEM_viscosity.h"
-#include "TMATshell_elastic.h"
-#include "TMATshell_plastic.h"
+#include "TMATIsotropic_elastic.h"
 #include "TMATIsotropic_plastic.h"
-#include "TMAT_fluid.h"
-#include "TMAT_Johnson_Cook.h"
 using namespace std;
 void Skeyword::clear_keyword()
 {
@@ -153,127 +148,23 @@ void next_data(ifstream& input)
 		}
 	} while (true);
 }
-TEOS_base* generate_EOS(SEOS EOS,Smaterial mat)
-{
-	TEOS_base* EOS_ptr;
-	if (EOS.EOS_type=="*EOS_LINEAR_POLYNOMIAL")
-	{
-		TEOS_linear_polynomial* new_EOS;
-		new_EOS=new TEOS_linear_polynomial(EOS.c0,EOS.c1,EOS.c2,EOS.c3,EOS.c4,EOS.c5,EOS.c6,mat.density);
-		EOS_ptr=new_EOS;
-	}
-	else if (EOS.EOS_type=="*EOS_POLYTROPIC")
-	{
-		TEOS_polytropic* new_EOS;
-		new_EOS=new TEOS_polytropic(EOS.p0,mat.density,EOS.gama,EOS.b);
-		EOS_ptr=new_EOS;
-	}
-	else if (EOS.EOS_type=="*EOS_WEAK_IMPRESSIBLE")
-	{
-		TEOS_weak_impressible* new_EOS;
-		new_EOS=new TEOS_weak_impressible(EOS.c0,mat.density,EOS.c1);
-		EOS_ptr=new_EOS;
-	}
-	else if (EOS.EOS_type=="*EOS_JWL")
-	{
-		TEOS_JWL* new_EOS;
-		new_EOS=new TEOS_JWL(EOS.A,EOS.B,EOS.R1,EOS.R2,EOS.w,mat.density);
-		EOS_ptr=new_EOS;
-	}
-	else if (EOS.EOS_type=="*EOS_MieGruneisen")
-	{
-		TEOS_MieGruneisen* new_EOS;
-		new_EOS=new TEOS_MieGruneisen(EOS.c0,EOS.s,EOS.gama0,mat.density);
-		EOS_ptr=new_EOS;
-	}
-	else if (EOS.EOS_type=="*EOS_PSUEDO")
-	{
-		TEOS_PSEUDO* new_EOS;
-		new_EOS=new TEOS_PSEUDO(EOS.c0,EOS.c1,EOS.c2,EOS.c3,EOS.c4,EOS.c5,EOS.c6,mat.density);
-		EOS_ptr=new_EOS;
-	}
-	else
-	{
-		EOS_ptr=NULL;
-	}
-	return EOS_ptr;
-}
 TMAT_base* generate_material(Smaterial mat,SEOS EOS,int type)
 {
 	TMAT_base* mat_ptr=NULL;
 	if (mat.material_type=="*MAT_ELASTIC")
 	{
-		if (type==1)
-		{
-			TMATshell_elastic* new_mat;
-			new_mat=new TMATshell_elastic(mat.density,mat.Youngs,mat.Possion);
-			mat_ptr=new_mat;
-		}
-		else if (type==0)
-		{
-			TMATIsotropic_elastic* new_mat;
-			new_mat=new TMATIsotropic_elastic(mat.density,mat.Youngs,mat.Possion);
-			mat_ptr=new_mat;
-		}
-	}
-	else if (mat.material_type=="*MAT_PLASTIC_KINEMATIC")
-	{
-		if (type==1)
-		{
-			TMATshell_plastic* new_mat;
-			new_mat=new TMATshell_plastic(mat.density,mat.Youngs,mat.Possion,mat.Sigma_y,mat.ET);
-			mat_ptr=new_mat;
-		}
-		else if (type==0)
-		{
-			TMATIsotropic_plastic* new_mat;
-			new_mat=new TMATIsotropic_plastic(mat.density,mat.Youngs,mat.Possion,mat.Sigma_y,mat.ET);
-			mat_ptr=new_mat;
-		}
-	}
-	else if (mat.material_type=="*MAT_Johnson_Cook")
-	{
-		TEOS_base* EOS_ptr;
-		EOS_ptr=generate_EOS(EOS,mat);
-		TMAT_Johnson_Cook* new_mat;
-		new_mat=new TMAT_Johnson_Cook(mat.density,mat.Youngs,mat.Possion,mat.A,mat.B,mat.C,mat.n,mat.epso,EOS_ptr);
+		TMATIsotropic_elastic* new_mat;
+		new_mat=new TMATIsotropic_elastic(mat.density,mat.Youngs,mat.Possion);
 		mat_ptr=new_mat;
 	}
-	else if (mat.material_type=="*MAT_NULL")
+	else if (mat.material_type == "*MAT_PLASTIC_KINEMATIC")
 	{
-		TEOS_base* EOS_ptr;
-		EOS_ptr=generate_EOS(EOS,mat);
-		TMAT_fluid* new_mat;
-		double internal_energy=maxval(EOS.internal_energy_per_volume/mat.density,1e-5);
-		new_mat=new TMAT_fluid(mat.density,internal_energy,EOS_ptr);
-		mat_ptr=new_mat;
+		TMATIsotropic_plastic* new_mat;
+		new_mat = new TMATIsotropic_plastic(mat.density, mat.Youngs, mat.Possion, mat.Sigma_y, mat.ET);
+		mat_ptr = new_mat;
 	}
 	return mat_ptr;
 }
-Tviscosity_base* generate_AV(Sarti_vis arti_vis)
-{
-	Tviscosity_base* av_ptr=NULL;
-	if (arti_vis.av_type==0)
-	{
-		Tsolid_viscosity* new_av;
-		new_av=new Tsolid_viscosity("Solid_viscosity",arti_vis.k1,arti_vis.k2);
-		av_ptr=new_av;
-	}
-	else if (arti_vis.av_type==1)
-	{
-		Tedge_viscosity* new_av;
-		new_av=new Tedge_viscosity("Edge_viscosity",arti_vis.k1,arti_vis.k2);
-		av_ptr=new_av;
-	}
-	else if (arti_vis.av_type==2)
-	{
-		TFEM_viscosity* new_av;
-		new_av=new TFEM_viscosity("FEM_viscosity",arti_vis.k1);
-		av_ptr=new_av;
-	}
-	return av_ptr;
-}
-
 //-------------------------------------------------------------------
 //Read in keyword file
 //-------------------------------------------------------------------
@@ -629,11 +520,11 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 		{
 			while (!exam_keyword(input))
 			{
-				Scell_8 new_shell;
-				input>>new_shell.cell_id>>new_shell.part_id;
-				input>>new_shell.IEN[0]>>new_shell.IEN[1]>>new_shell.IEN[2]>>new_shell.IEN[3];
-				input>>new_shell.IEN[4]>>new_shell.IEN[5]>>new_shell.IEN[6]>>new_shell.IEN[7];
-				keyword.cell_8_list.push_back(new_shell);
+				Scell_8 new_cell;
+				input>> new_cell.cell_id>> new_cell.part_id;
+				input>> new_cell.IEN[0]>> new_cell.IEN[1]>> new_cell.IEN[2]>> new_cell.IEN[3];
+				input>> new_cell.IEN[4]>> new_cell.IEN[5]>> new_cell.IEN[6]>> new_cell.IEN[7];
+				keyword.cell_8_list.push_back(new_cell);
 			}
 		}
 		else if (a=="*ELEMENT_SOLID_TET")
@@ -717,7 +608,7 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 			next_data(input);
 			input>>keyword.hourglass_option;
 		}
-		else if (a == "*VELOCITY_INITIAL")
+		else if (a=="*VELOCITY_INITIAL")
 		{
 			next_data(input);
 			vec3D v;

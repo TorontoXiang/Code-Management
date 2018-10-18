@@ -13,6 +13,7 @@
 #include <iomanip>
 #include "Tbody_ALEMPM.h"
 #include "Tbody_MPM.h"
+#include "Tbody_brick.h"
 //#include "Tmaterial_grid.h"
 using namespace std;
 Tregion::Tregion()
@@ -142,10 +143,6 @@ void Tregion::time_integration()
 		{
 			_body_list[i]->output_mesh("Process");
 		}
-		//if (_current_step==16000 || _current_step==17200 || _current_step==20000)
-		//{
-		//	_body_list[0]->output_mesh("Final");
-		//}
 		//Output the cell monitor
 		for (int i = 0; i < _num_body; i++)
 		{
@@ -307,6 +304,13 @@ bool Tregion::input_region()
 				cout<<"Finish the body modification"<<endl;
 				system("Pause");
 				exit(0);
+			}
+			else if (body_type_list[i]=="body_brick")
+			{
+				Tbody_brick* body_brick;
+				body_brick = new Tbody_brick(i, body_type_list[i]);
+				_body_list[i] = body_brick;
+				_body_list[i]->input_body(input);
 			}
 			else 
 			{

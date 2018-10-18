@@ -93,6 +93,8 @@ protected:
 	friend class Tbody_explosion;
 	friend class Tcell_pure_fluid_MPM;
 	friend class Tcell_mixed_fluid_MPM;
+	friend class Tcell_brick;
+	friend class Tbody_brick;
 };
 //--------------------------------------------------------------------------------
 //Define node with rotation freedom
