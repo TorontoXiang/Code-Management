@@ -4,6 +4,8 @@
 #include "data_structure.h"
 #include <vector>
 #include "TMAT_base.h"
+#include <iostream>
+using namespace std;
 //Define cell shell
 class Tcell_brick
 {

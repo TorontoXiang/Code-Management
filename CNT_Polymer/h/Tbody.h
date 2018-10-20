@@ -1,7 +1,7 @@
 #ifndef TBODY
 #define TBODY
 //Define the brick body
-
+#include "readin.h"
 #include "Tcell_brick.h"
 #include "Tnode.h"
 #include <vector>
@@ -63,6 +63,9 @@ protected:
 
 	int _nume;              //Number of element
 	int _nump;              //Number of node
+	int _nx, _ny, _nz;      //Number of cell in x,y,z direction (Only for regular grid)
+	vec3D _x_min, _x_max;   //Extreme coordinate of the regular grid (Only for regular grid)
+	vec3D _interval;        //The coordinate increment at x,y,z direction (Only for regular grid)
 	int _num_step;          //Simulation steps
 	double _dt,_dt_pre;     //Current and previous time increment
 	double _endtime;        //The end time
@@ -90,6 +93,12 @@ protected:
 	//Create a Scurve_output to output curve
 	void create_Tecplot_mesh(double amplify_ratio, int total_frame);
 	//Create the tecplot mesh output
+	void input_irregular_grid(Skeyword& keyword);
+	//Input a irregular grid
+	void input_regular_grid(Skeyword& keyword);
+	//Input a regular grid
+	void apply_regular_bc(Sregular_grid_bc& bc);
+	//Apply the boundary condition for a regular grid
 
 
 };

@@ -80,7 +80,6 @@ void Tbody::apply_external_force()
 }
 void Tbody::calculate_time_step()
 {
-	double temp;
 	double min_time_step = 100000;
 	for (int i = 0; i < _nume; i++)
 	{
@@ -148,6 +147,18 @@ void Tbody::input_body(ifstream& input)
 {
 	Skeyword keyword;
 	read_in_keyword_file(input, keyword);
+	if (!keyword.is_regular_grid)
+	{
+		input_irregular_grid(keyword);
+	}
+	else
+	{
+		input_regular_grid(keyword);
+	}
+	return;
+}
+void Tbody::input_irregular_grid(Skeyword& keyword)
+{
 	//Read the body global information from keyword
 	_nume = keyword.cell_8_list.size();
 	_nump = keyword.node_list.size();
@@ -191,9 +202,8 @@ void Tbody::input_body(ifstream& input)
 		part_id = keyword.cell_8_list[i].part_id;
 		material_id = keyword.part_list[part_id - 1].material_id;
 		Smaterial this_mat = keyword.material_list[material_id - 1];
-		SEOS temp;    //Useless
 		TMAT_base* mat;
-		mat = generate_material(this_mat, temp, 0);
+		mat = generate_material(this_mat, 0);
 		//Create a new cell
 		Tcell_brick new_cell(id, node_ptr, mat);
 		_grid_polymer._cell_list[i] = new_cell;
@@ -252,6 +262,84 @@ void Tbody::input_body(ifstream& input)
 		{
 			_nodeptr_list[i]->_velocity = keyword.initial_vel;
 		}
+	}
+	for (int i = 0; i < _nump; i++)
+	{
+		if (abs(_nodeptr_list[i]->_position.z) < 1e-10)
+		{
+			_nodeptr_list[i]->_bc_type_position[2] = 1;
+		}
+	}
+	return;
+}
+void Tbody::input_regular_grid(Skeyword& keyword)
+{
+	//Read the body global information from keyword
+	_endtime = keyword.time_control.endtime;
+	_CFL = keyword.time_control.CFL;
+	_num_step = 0;
+	//Read the information about the regular grid
+	_x_min = keyword.regular_grid.x_min; _x_max = keyword.regular_grid.x_max;
+	_nx = keyword.regular_grid.nx; _ny = keyword.regular_grid.ny; _nz = keyword.regular_grid.nz;
+	_nump = (_nx + 1)*(_ny + 1)*(_nz + 1);
+	_nume = _nx * _ny*_nz;
+	_grid_polymer._node_list.resize(_nump);
+	_nodeptr_list.resize(_nump);
+	_grid_polymer._cell_list.resize(_nume);
+	_cellptr_list.resize(_nume);
+	_interval.x = (_x_max - _x_min).x / _nx;
+	_interval.y = (_x_max - _x_min).x / _ny;
+	_interval.z = (_x_max - _x_min).z / _nz;
+	//Generate the node coordinate
+	vec3D dx,coor;
+	int index;
+	for (int i = 0; i < _nx + 1; i++)
+	{
+		for (int j = 0; j < _ny + 1; j++)
+		{
+			for (int k = 0; k < _nz + 1; k++)
+			{
+				index = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*j + k;
+				dx.value(i*_interval.x, j*_interval.y, k*_interval.z);
+				coor = _x_min + dx;
+				Tnode new_node(index, coor.x, coor.y, coor.z);
+				_grid_polymer._node_list[index] = new_node;
+				_nodeptr_list[index] = &_grid_polymer._node_list[index];
+			}
+		}
+	}
+	//Generate the cell
+	int index_node[8];
+	Tnode* node_ptr[8];
+	for (int i = 0; i < _nx; i++)
+	{
+		for (int j = 0; j < _ny; j++)
+		{
+			for (int k = 0; k < _nz; k++)
+			{
+				index = _ny * _nz*i + _nz * j + k; //The index convertion for cell
+				index_node[0] = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*j + k; index_node[1] = (_ny + 1)*(_nz + 1)*(i + 1) + (_nz + 1)*j + k;
+				index_node[2] = (_ny + 1)*(_nz + 1)*(i + 1) + (_nz + 1)*(j + 1) + k; index_node[3] = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*(j + 1) + k;
+				index_node[4] = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*j + k + 1; index_node[5] = (_ny + 1)*(_nz + 1)*(i + 1) + (_nz + 1)*j + k + 1;
+				index_node[6] = (_ny + 1)*(_nz + 1)*(i + 1) + (_nz + 1)*(j + 1) + k + 1; index_node[7] = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*(j + 1) + k + 1;
+				for (int n = 0; n < 8; n++)
+				{
+					node_ptr[n] = _nodeptr_list[index_node[n]];
+				}
+				Smaterial this_mat = keyword.material_list[0];
+				TMAT_base* mat;
+				mat = generate_material(this_mat, 0);
+				Tcell_brick new_cell(index, node_ptr, mat);
+				_grid_polymer._cell_list[index] = new_cell;
+				_cellptr_list[index] = &_grid_polymer._cell_list[index];
+			}
+		}
+	}
+	int num_bc = keyword.regular_bc_list.size();
+	for (int i = 0; i < num_bc; i++)
+	{
+		Sregular_grid_bc bc = keyword.regular_bc_list[i];
+		apply_regular_bc(bc);
 	}
 	return;
 }
@@ -382,6 +470,62 @@ void Tbody::Output_Curve()
 			vec3D dis = node_ptr->calculate_displacement();
 			_curve_out_list[i]->output << setw(20) << _current_time << " ";
 			_curve_out_list[i]->output << setw(20) << dis.x << setw(20) << dis.y << setw(20) << dis.z << endl;
+		}
+	}
+	return;
+}
+void Tbody::apply_regular_bc(Sregular_grid_bc& bc)
+{
+	int nx_min = 0, ny_min = 0, nz_min = 0;
+	int nx_max = _nx + 1, ny_max = _ny + 1, nz_max = _nz + 1;
+	if (bc.FaceName=="x_min")
+	{
+		nx_min = 0; nx_max = 1;
+	}
+	else if (bc.FaceName == "x_max")
+	{
+		nx_min = _nx; nx_max = _nx + 1;
+	}
+	else if (bc.FaceName == "y_min")
+	{
+		ny_min = 0; ny_max = 1;
+	}
+	else if (bc.FaceName == "y_max")
+	{
+		ny_min = _ny; ny_max = _ny + 1;
+	}
+	else if (bc.FaceName == "z_min")
+	{
+		nz_min = 0; nz_max = 1;
+	}
+	else if (bc.FaceName == "z_max")
+	{
+		nz_min = _nz; nz_max = _nz + 1;
+	}
+	else
+	{
+		cout << "Invalid boundary contition for regular grid" << endl;
+		system("Pause");
+		exit(0);
+	}
+	for (int i = nx_min; i < nx_max; i++)
+	{
+		for (int j = ny_min; j < ny_max; j++)
+		{
+			for (int k = nz_min; k < nz_max; k++)
+			{
+				int index = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*j + k;
+				Tnode* nodeptr = _nodeptr_list[index];
+				if (bc.bc_type==0)
+				{
+					nodeptr->_bc_type_position[bc.direction] = 1;
+				}
+				else if (bc.bc_type==1)
+				{
+					nodeptr->_bc_type_position[bc.direction] = 2;
+					nodeptr->_bc_velocity[bc.direction] = bc.velocity;
+				}
+			}
 		}
 	}
 	return;

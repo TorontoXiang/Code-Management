@@ -8,76 +8,15 @@ using namespace std;
 void Skeyword::clear_keyword()
 {
 	node_list.resize(0);
-	particle_list.resize(0);
-	cell_4_list.resize(0);
 	cell_8_list.resize(0);
 	boundary_list.resize(0);
 	node_group_list.resize(0);
 	load_list.resize(0);
 	part_list.resize(0);
-	section_shell_list.resize(0);
 	material_list.resize(0);
-	EOS_list.resize(0);
-	curve_list.resize(0);
 	//time_control;
 	//background;
 	initial_velocity_list.resize(0);
-	MPM_boundary_condition_list.resize(0);
-	MPM_background_load_list.resize(0);
-	MPM_particle_load_list.resize(0);
-	ALEMPM_background_property.resize(0);
-}
-string Sinteraction::calculate_interaction_type_id()
-{
-	//Return the interaction type id,order by programming time
-	if (interaction_name=="conode")
-	{
-		return "00";
-	}
-	else
-	{
-		cout<<"Error: Invalid interaction type in calling calculate_interaction_type_id()"<<endl;
-		system("Pause");
-		exit(0);
-	}
-}
-void Sremapping_scheme::exam_remapping_scheme()
-{
-	if (name!="Times" && name!="Adaption" && name!="None" && name!="DtReduction")
-	{
-		cout<<"Error:Invalid remapping scheme type"<<endl;
-		system("Pause");
-		exit(0);
-		return;
-	}
-	else if (name=="Times")
-	{
-		if (num_remapping<=0)
-		{
-			cout<<"Error:The number of remapping times is "<<num_remapping<<endl;
-			system("Pause");
-			exit(0);
-			return;
-		}
-	}
-	else if (name=="Adaption")
-	{
-		if (tolerance_angle<=0)
-		{
-			cout<<"Error:The tolerance_angle in remapping scheme is "<<tolerance_angle<<endl;
-			system("Pause");
-			exit(0);
-			return;
-		}
-		if (tolerance_length<=0)
-		{
-			cout<<"Error:The tolerance_length in remapping scheme is "<<tolerance_length<<endl;
-			system("Pause");
-			exit(0);
-			return;
-		}
-	}
-	return;
 }
 void new_line(ifstream& input)
 {
@@ -148,7 +87,7 @@ void next_data(ifstream& input)
 		}
 	} while (true);
 }
-TMAT_base* generate_material(Smaterial mat,SEOS EOS,int type)
+TMAT_base* generate_material(Smaterial mat,int type)
 {
 	TMAT_base* mat_ptr=NULL;
 	if (mat.material_type=="*MAT_ELASTIC")
@@ -186,21 +125,6 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 				keyword.node_list.push_back(new_node);
 			}
 		}
-		else if (a=="*MPM_PARTICLE")
-		{
-			next_data(input);
-			int group_id,part_id;
-			input>>group_id>>part_id;
-			while (!exam_keyword(input))
-			{
-				Sparticle_temp new_particle;
-				new_particle.group_id=group_id;
-				new_particle.part_id=part_id;
-				input>>new_particle.position.x>>new_particle.position.y;
-				input>>new_particle.position.z>>new_particle.volume;
-				keyword.particle_list.push_back(new_particle);
-			}
-		}
 		else if (a=="*CONTROL_TERMINATION")
 		{
 			next_data(input);
@@ -227,35 +151,6 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 			input>>new_bd.id>>new_bd.dofvel[0]>>new_bd.dofvel[1]>>new_bd.dofvel[2]>>new_bd.vel[0]>>new_bd.vel[1]>>new_bd.vel[2];
 			new_bd.type=1;
 			keyword.boundary_list.push_back(new_bd);
-		}
-		else if (a=="*VELOCITY_BOUNDARY_CYLINDER")
-		{
-			next_data(input);
-			Sboundary_type new_bd;
-			input>>new_bd.id>>new_bd.x>>new_bd.y>>new_bd.v; 
-			new_bd.type=2;
-			keyword.boundary_list.push_back(new_bd);
-		}
-		else if (a=="*VELOCITY_BOUNDARY_SPHERE")
-		{
-			next_data(input);
-			Sboundary_type new_bd;
-			input>>new_bd.id>>new_bd.x>>new_bd.y>>new_bd.z>>new_bd.v; 
-			new_bd.type=3;
-			keyword.boundary_list.push_back(new_bd);
-		}
-		else if (a=="*NODE_PERTURBATION")
-		{
-			next_data(input);
-			SNodePerturbation new_per;
-			input>>new_per.id>>new_per.dimension>>new_per.x>>new_per.y>>new_per.z>>new_per.ratio; 
-			keyword.im_node_perturbation=new_per;
-		}
-		else if (a=="*IMPLOSION")
-		{
-			next_data(input);
-			keyword.is_implosion=true;
-			input>>keyword.im.d0>>keyword.im.N>>keyword.im.r_in>>keyword.im.r_out;
 		}
 		else if (a=="*SET_NODE_LIST")
 		{
@@ -291,7 +186,7 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 				keyword.load_list.push_back(new_load);
 			}
 		}
-		else if (a=="*PART" || a=="*PART_PARTICLE")
+		else if (a=="*PART")
 		{
 			Spart new_part;
 			next_data(input);
@@ -304,25 +199,6 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 				keyword.part_list.resize(part_id);
 			}
 			keyword.part_list[part_id-1]=new_part;
-			if (a=="*PART_PARTICLE")
-			{
-				keyword.num_particle_part=keyword.num_particle_part+1;
-			}
-		}
-		else if (a=="*SECTION_SHELL")
-		{
-			Ssection_shell new_section;
-			next_data(input);
-			input>>new_section.section_id>>temp>>temp>>new_section.nGauss;
-			next_data(input);
-			input>>new_section.thickness;
-			//Add new_section to section_shell_list and keep in order
-			unsigned int section_id=new_section.section_id;
-			if (section_id>keyword.section_shell_list.size())
-			{
-				keyword.section_shell_list.resize(section_id);
-			}
-			keyword.section_shell_list[section_id-1]=new_section;
 		}
 		else if (a=="*MAT_ELASTIC")
 		{
@@ -356,166 +232,6 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 			}
 			keyword.material_list[material_id-1]=new_material;
 		}
-		else if (a=="*MAT_Johnson_Cook")
-		{
-			Smaterial new_material;
-			next_data(input);
-			input>>new_material.material_id;
-			input>>new_material.density>>new_material.Youngs>>new_material.Possion;
-			input>>new_material.A>>new_material.B>>new_material.n>>new_material.C>>new_material.epso;
-			new_material.material_type=a;
-			//Add new_material into material_list and keep in order
-			unsigned int material_id=new_material.material_id;
-			if (material_id>keyword.material_list.size())
-			{
-				keyword.material_list.resize(material_id);
-			}
-			keyword.material_list[material_id-1]=new_material;
-		}
-		else if (a=="*MAT_NULL")
-		{
-			Smaterial new_material;
-			next_data(input);
-			input>>new_material.material_id;
-			input>>new_material.density;
-			new_material.material_type=a;
-			//Add new_material into material_list and keep in order
-			unsigned int material_id=new_material.material_id;
-			if (material_id>keyword.material_list.size())
-			{
-				keyword.material_list.resize(material_id);
-			}
-			keyword.material_list[material_id-1]=new_material;
-		}
-		else if (a=="*EOS_LINEAR_POLYNOMIAL")
-		{
-			SEOS new_EOS;
-			next_data(input);
-			input>>new_EOS.EOS_id;
-			input>>new_EOS.c0>>new_EOS.c1>>new_EOS.c2>>new_EOS.c3;
-			input>>new_EOS.c4>>new_EOS.c5>>new_EOS.c6;
-			next_data(input);
-			input>>new_EOS.internal_energy_per_volume;
-			new_EOS.EOS_type=a;
-			//Add new_EOS into EOS_list and keep in order
-			unsigned int EOS_id=new_EOS.EOS_id;
-			if (EOS_id>keyword.EOS_list.size())
-			{
-				keyword.EOS_list.resize(EOS_id);
-			}
-			keyword.EOS_list[EOS_id-1]=new_EOS;
-		}
-		else if (a=="*EOS_POLYTROPIC")
-		{
-			SEOS new_EOS;
-			next_data(input);
-			input>>new_EOS.EOS_id;
-			input>>new_EOS.p0>>new_EOS.gama>>new_EOS.b>>new_EOS.internal_energy_per_volume;
-			next_data(input);
-			new_EOS.EOS_type=a;
-			//Add new_EOS into EOS_list and keep in order
-			unsigned int EOS_id=new_EOS.EOS_id;
-			if (EOS_id>keyword.EOS_list.size())
-			{
-				keyword.EOS_list.resize(EOS_id);
-			}
-			keyword.EOS_list[EOS_id-1]=new_EOS;
-		}
-		else if (a=="*EOS_WEAK_IMPRESSIBLE")
-		{
-			SEOS new_EOS;
-			next_data(input);
-			input>>new_EOS.EOS_id>>new_EOS.c0>>new_EOS.c1>>new_EOS.internal_energy_per_volume;
-			next_data(input);
-			new_EOS.EOS_type=a;
-			//Add new_EOS into EOS_list and keep in order
-			unsigned int EOS_id=new_EOS.EOS_id;
-			if (EOS_id>keyword.EOS_list.size())
-			{
-				keyword.EOS_list.resize(EOS_id);
-			}
-			keyword.EOS_list[EOS_id-1]=new_EOS;
-		}
-		else if (a=="*EOS_JWL")
-		{
-			SEOS new_EOS;
-			next_data(input);
-			input>>new_EOS.EOS_id>>new_EOS.A>>new_EOS.B>>new_EOS.R1>>new_EOS.R2>>new_EOS.w>>new_EOS.internal_energy_per_volume;
-			next_data(input);
-			new_EOS.EOS_type=a;
-			//Add new_EOS into EOS_list and keep in order
-			unsigned int EOS_id=new_EOS.EOS_id;
-			if (EOS_id>keyword.EOS_list.size())
-			{
-				keyword.EOS_list.resize(EOS_id);
-			}
-			keyword.EOS_list[EOS_id-1]=new_EOS;
-		}
-		else if (a=="*EOS_MieGruneisen")
-		{
-			SEOS new_EOS;
-			next_data(input);
-			input>>new_EOS.EOS_id>>new_EOS.c0>>new_EOS.s>>new_EOS.gama0;
-			next_data(input);
-			new_EOS.EOS_type=a;
-			unsigned int EOS_id=new_EOS.EOS_id;
-			if (EOS_id>keyword.EOS_list.size())
-			{
-				keyword.EOS_list.resize(EOS_id);
-			}
-			keyword.EOS_list[EOS_id-1]=new_EOS;
-		}
-		else if (a=="*EOS_PESUDO")
-		{
-			SEOS new_EOS;
-			next_data(input);
-			input>>new_EOS.EOS_id;
-			input>>new_EOS.c0>>new_EOS.c1>>new_EOS.c2>>new_EOS.c3;
-			input>>new_EOS.c4>>new_EOS.c5>>new_EOS.c6;
-			next_data(input);
-			input>>new_EOS.internal_energy_per_volume;
-			new_EOS.EOS_type=a;
-			//Add new_EOS into EOS_list and keep in order
-			unsigned int EOS_id=new_EOS.EOS_id;
-			if (EOS_id>keyword.EOS_list.size())
-			{
-				keyword.EOS_list.resize(EOS_id);
-			}
-			keyword.EOS_list[EOS_id-1]=new_EOS;
-		}
-		else if (a=="*DEFINE_CURVE")
-		{
-			double v1,v2;
-			Scurve new_curve;
-			next_data(input);
-			input>>new_curve.curve_id;
-			//new_line(input);
-			while (!exam_keyword(input))
-			{
-				input>>v1>>v2;
-				//new_line(input);
-				new_curve.v1.push_back(v1);
-				new_curve.v2.push_back(v2);
-			}
-			//Add new_curve to curve_list and keep in order
-			unsigned int curve_id=new_curve.curve_id;
-			if (curve_id>keyword.curve_list.size())
-			{
-				keyword.curve_list.resize(curve_id);
-			}
-			keyword.curve_list[curve_id-1]=new_curve;
-		}
-		else if (a=="*ELEMENT_SHELL")
-		{
-			while (!exam_keyword(input))
-			{
-				Scell_4 new_shell;
-				input>>new_shell.cell_id>>new_shell.part_id;
-				input>>new_shell.IEN[0]>>new_shell.IEN[1];
-				input>>new_shell.IEN[2]>>new_shell.IEN[3];
-				keyword.cell_4_list.push_back(new_shell);
-			}
-		}
 		else if (a=="*ELEMENT_SOLID")
 		{
 			while (!exam_keyword(input))
@@ -527,30 +243,22 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 				keyword.cell_8_list.push_back(new_cell);
 			}
 		}
-		else if (a=="*ELEMENT_SOLID_TET")
+		else if (a=="*REGULAR_GRID")
 		{
-			bool is_first=true;
-			while (!exam_keyword(input))
-			{
-				Scell_4 new_tet;
-				input>>new_tet.cell_id>>new_tet.part_id;
-				if (is_first)
-				{
-					next_data(input);
-					is_first=false;
-				}
-				input>>new_tet.IEN[0]>>new_tet.IEN[1]>>new_tet.IEN[2]>>new_tet.IEN[3];
-				keyword.cell_4_list.push_back(new_tet);
-			}
+			keyword.is_regular_grid = true;
+			next_data(input);
+			input>>keyword.regular_grid.x_min.x>>keyword.regular_grid.x_min.y>>keyword.regular_grid.x_min.z;
+			next_data(input);
+			input>>keyword.regular_grid.x_max.x>>keyword.regular_grid.x_max.y>>keyword.regular_grid.x_max.z;
+			next_data(input);
+			input>>keyword.regular_grid.nx>>keyword.regular_grid.ny>>keyword.regular_grid.nz;
 		}
-		else if (a=="*BACKGROUND")
+		else if (a=="*REGULAR_GRID_BD")
 		{
+			Sregular_grid_bc new_bc;
 			next_data(input);
-			input>>keyword.background.x_min.x>>keyword.background.x_min.y>>keyword.background.x_min.z;
-			next_data(input);
-			input>>keyword.background.x_max.x>>keyword.background.x_max.y>>keyword.background.x_max.z;
-			next_data(input);
-			input>>keyword.background.nx>>keyword.background.ny>>keyword.background.nz;
+			input >> new_bc.FaceName >> new_bc.bc_type >> new_bc.direction >> new_bc.velocity;
+			keyword.regular_bc_list.push_back(new_bc);
 		}
 		else if (a=="*INITIAL_VELOCITY")
 		{
@@ -560,54 +268,6 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 			input>>new_initial_velocity.velocity.z;
 			keyword.initial_velocity_list.push_back(new_initial_velocity);
 		}
-		else if (a=="*MPM_BOUNDARY_CONDITION")
-		{
-			next_data(input);
-			SMPM_boundary_condrition new_boundary_condition;
-			input>>new_boundary_condition.strat_subscript[0]>>new_boundary_condition.strat_subscript[1]>>new_boundary_condition.strat_subscript[2];
-			next_data(input);
-			input>>new_boundary_condition.terminate_subscript[0]>>new_boundary_condition.terminate_subscript[1]>>new_boundary_condition.terminate_subscript[2];
-			next_data(input);
-			input>>new_boundary_condition.constraint[0]>>new_boundary_condition.constraint[1]>>new_boundary_condition.constraint[2];
-			keyword.MPM_boundary_condition_list.push_back(new_boundary_condition);
-		}
-		else if (a=="*MPM_BOUNDARY_LOAD_BACKGROUND")
-		{
-			next_data(input);
-			SMPM_background_load new_load;
-			input>>new_load.strat_subscript[0]>>new_load.strat_subscript[1]>>new_load.strat_subscript[2];
-			next_data(input);
-			input>>new_load.terminate_subscript[0]>>new_load.terminate_subscript[1]>>new_load.terminate_subscript[2];
-			next_data(input);
-			input>>new_load.load.x>>new_load.load.y>>new_load.load.z;
-			keyword.MPM_background_load_list.push_back(new_load);
-		}
-		else if (a=="*MPM_PARTICLE_LOAD")
-		{
-			next_data(input);
-			SMPM_particle_load new_load;
-			input>>new_load.part_id>>new_load.particle_id;
-			next_data(input);
-			input>>new_load.load.x>>new_load.load.y>>new_load.load.z;
-			next_data(input);
-			keyword.MPM_particle_load_list.push_back(new_load);
-		}
-		else if (a=="*ALEMPM_BACKGROUND_PROPERTY")
-		{
-			next_data(input);
-			Sbackground_property new_property;
-			input>>new_property.part_id;
-			next_data(input);
-			input>>new_property.nx_begin>>new_property.ny_begin>>new_property.nz_begin;
-			next_data(input);
-			input>>new_property.nx_end>>new_property.ny_end>>new_property.nz_end;
-			keyword.ALEMPM_background_property.push_back(new_property);
-		}
-		else if (a=="*HOURGLASS_OPTION")
-		{
-			next_data(input);
-			input>>keyword.hourglass_option;
-		}
 		else if (a=="*VELOCITY_INITIAL")
 		{
 			next_data(input);
@@ -615,6 +275,28 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 			input >> v.x >> v.y >> v.z;
 			keyword.is_initial_vel = true;
 			keyword.initial_vel = v;
+		}
+		else if (a == "*DEFINE_CURVE")
+		{
+			double v1, v2;
+			Scurve new_curve;
+			next_data(input);
+			input >> new_curve.curve_id;
+			//new_line(input);
+			while (!exam_keyword(input))
+			{
+				input >> v1 >> v2;
+				//new_line(input);
+				new_curve.v1.push_back(v1);
+				new_curve.v2.push_back(v2);
+			}
+			//Add new_curve to curve_list and keep in order
+			unsigned int curve_id = new_curve.curve_id;
+			if (curve_id > keyword.curve_list.size())
+			{
+				keyword.curve_list.resize(curve_id);
+			}
+			keyword.curve_list[curve_id - 1] = new_curve;
 		}
 		else if (a=="*END")
 		{

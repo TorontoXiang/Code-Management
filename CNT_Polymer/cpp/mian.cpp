@@ -6,7 +6,7 @@ int main()
 {
 	Tbody simulation;
 	ifstream input;
-	input.open("Taylor_bar.k");
+	input.open("RegularGridTest.k");
 	simulation.input_body(input);
 	simulation.input_simulation_control();
 	simulation.calculate_nodal_inertance();

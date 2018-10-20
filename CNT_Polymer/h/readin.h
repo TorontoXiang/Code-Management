@@ -8,13 +8,6 @@
 #include "data_structure.h"
 using namespace std;
 class Tbody_base;
-//Temporary structure for shell
-struct Scell_4
-{
-	int cell_id;         //The id of the shell
-	int IEN[4];          //The connected node for the cell
-	int part_id;         //The part id of the cell
-};
 //Tmeporary structure for brick
 struct Scell_8
 {
@@ -27,15 +20,6 @@ struct Snode_temp
 {
 	int id;            //The node id
 	double x,y,z;      //The node coordinate
-};
-//Temproary structure for particle
-struct Sparticle_temp
-{
-	int group_id;
-	int part_id;
-	vec3D position;
-	vec3D velocity;
-	double volume;
 };
 //Temporary structures for control cards
 struct Sboundary_type
@@ -67,12 +51,6 @@ struct Spart
 	int material_id;     //Material id
 	int EOS_id;          //EOS id
 };
-struct Ssection_shell
-{
-	int section_id;      //Section id
-	int nGauss;          //The number of Gauss point in the shell
-	double thickness;    //The initial thickness of the shell
-};
 struct Smaterial
 {
 	int material_id;         //Material id
@@ -84,22 +62,6 @@ struct Smaterial
 	double ET;
 	double A,B,n,C,epso;    //Parameters for Johnson Cook model
 };
-struct SEOS
-{
-	int EOS_id;
-	string EOS_type;
-	double c0,c1,c2,c3,c4,c5,c6;
-	double internal_energy_per_volume;
-	double p0,gama,b;
-	double A,B,R1,R2,w;
-	double gama0,s;
-};
-struct Scurve
-{
-	int curve_id;
-	vector<double> v1;      //The first column
-	vector<double> v2;      //The second column
-};
 struct Stime
 {
 	double endtime;        //The terminal time
@@ -110,45 +72,7 @@ struct Sarti_vis
 	int av_type;
 	double k1,k2;
 };
-struct Sinteraction
-{
-	string interaction_name;
-	Tbody_base* body1;
-	Tbody_base* body2;
-
-	string calculate_interaction_type_id();
-	//Return the interaction type id
-};
-struct Sremapping_scheme
-{
-	string name;
-	int num_remapping;
-	double detonation_time;
-	double tolerance_angle;
-	double tolerance_length;
-	double DtReductionRatio;
-	double initialDt;
-	vector<double> remapping_time_point;
-
-
-	void exam_remapping_scheme();
-	//Exam whether the remapping scheme is valid
-};
-struct SNodePerturbation
-{
-	double x,y,z;
-	double ratio;
-	int id;
-	int dimension;
-};
-struct SImplosion
-{
-	double d0;
-	double N;
-	double r_in,r_out;
-};
-//Temporary structure of MPM background
-struct Sbackground_temp
+struct Sregular_grid
 {
 	vec3D x_min;
 	vec3D x_max;
@@ -159,63 +83,42 @@ struct Sinitial_velocity_temp
 	int part_id;
 	vec3D velocity;
 };
-struct SMPM_boundary_condrition
+struct Scurve
 {
-	int strat_subscript[3];
-	int terminate_subscript[3];
-	int constraint[3];
+	int curve_id;
+	vector<double> v1;      //The first column
+	vector<double> v2;      //The second column
 };
-struct SMPM_background_load
+struct Sregular_grid_bc
 {
-	int strat_subscript[3];
-	int terminate_subscript[3];
-	vec3D load;
-};
-struct SMPM_particle_load
-{
-	int part_id;
-	int particle_id;
-	vec3D load;
-};
-struct Sbackground_property
-{
-	int part_id;
-	int nx_begin,ny_begin,nz_begin;
-	int nx_end,ny_end,nz_end;
+	string FaceName;       //FaceName=x_min,x_max,y_min,y_max,z_min,z_max
+	int bc_type;           //0-fix position,1-fix velocity
+	int direction;         //Constriant direction
+	double velocity;       //The given velocity (Only for velocity boundary condition)
 };
 //---------------------------------------------------------------------
 //Structure for reading keyword file
 //---------------------------------------------------------------------
 struct Skeyword
 {
-	Skeyword() { num_particle_part = 0; is_implosion = false; hourglass_option = true; is_initial_vel = false; };
+	Skeyword() { is_initial_vel = false; is_regular_grid = false; };
 	vector<Snode_temp> node_list;
-	vector<Sparticle_temp> particle_list;
-	vector<Scell_4> cell_4_list;
 	vector<Scell_8> cell_8_list;
 	vector<Sboundary_type> boundary_list;
 	vector<Snode_group> node_group_list;
-
+	vector<Scurve> curve_list;
 	vector<Sload_on_node> load_list;
 	vector<Spart> part_list;
-	vector<Ssection_shell> section_shell_list;
 	vector<Smaterial> material_list;
-	vector<SEOS> EOS_list;
-	vector<Scurve> curve_list;
-	Stime time_control;
-	Sbackground_temp background;
 	vector<Sinitial_velocity_temp> initial_velocity_list;
-	vector<SMPM_boundary_condrition> MPM_boundary_condition_list;
-	vector<SMPM_background_load> MPM_background_load_list;
-	vector<SMPM_particle_load> MPM_particle_load_list;
-	vector<Sbackground_property> ALEMPM_background_property;
-	int num_particle_part;
-	bool is_implosion;
-	bool hourglass_option;
+
+	Stime time_control;
 	bool is_initial_vel;
-	SImplosion im;
-	SNodePerturbation im_node_perturbation;
 	vec3D initial_vel;
+	bool is_regular_grid;
+
+	Sregular_grid regular_grid;
+	vector<Sregular_grid_bc> regular_bc_list;
 
 	void clear_keyword();
 };
@@ -228,7 +131,7 @@ bool exam_keyword(ifstream& input); //Whether the beginning of the next function
 void next_keyword(ifstream& input); //Come to the next keyword from current position
 void next_data(ifstream& input);    //Finish this line and scape the note to the next functional line
 
-TMAT_base* generate_material(Smaterial mat,SEOS EOS,int type);
+TMAT_base* generate_material(Smaterial mat,int type);
 //Generate a material pointer
 //mat: the information of the material
 //type: 0:for 3D 1:for shell
