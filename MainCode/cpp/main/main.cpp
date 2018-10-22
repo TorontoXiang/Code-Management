@@ -18,7 +18,7 @@
 using namespace std;
 int main()
 {
-	omp_set_num_threads(8);
+	omp_set_num_threads(16);
 	Tregion region;
 	if (!region.input_region())
 	{

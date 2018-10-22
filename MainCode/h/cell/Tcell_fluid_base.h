@@ -277,5 +277,6 @@ protected:
 	friend class Tbody_MPM;
 	friend class Tbody_ALEMPM;
 	friend class Tcell_base;
+	friend class Tbody_ALE_with_explosion;
 };
 #endif

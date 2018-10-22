@@ -95,6 +95,10 @@ protected:
 	friend class Tcell_mixed_fluid_MPM;
 	friend class Tcell_brick;
 	friend class Tbody_brick;
+	friend class Tbody_with_explosion;
+	friend class Tbody_ALE_with_explosion;
+	template<class T1, class T2>
+	friend class Tinteraction_conode;
 };
 //--------------------------------------------------------------------------------
 //Define node with rotation freedom

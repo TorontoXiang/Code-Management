@@ -199,7 +199,7 @@ void Tbody_brick::output_tecplot(ofstream& output, double ratio)
 {
 	output << "TITLE = \"Mesh for Shell Element\"" << endl;
 	output << "VARIABLES = \"X\",\"Y\",\"Z\"" << endl;
-	output << "ZONE F=FEPOINT,N=" << _nump << "," << "E=" << _nume << "," << "ET=BRICK" << endl;
+	output << "ZONE T= \"Time="<<_current_time<<"\", F=FEPOINT,N=" << _nump << "," << "E=" << _nume << "," << "ET=BRICK" << endl;
 	vec3D dis;
 	for (int i = 0; i < _nump; i++)
 	{

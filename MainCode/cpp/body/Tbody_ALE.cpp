@@ -148,15 +148,21 @@ void Tbody_ALE::remapping_variables()
 	//output.open("temp.txt");
 	//system("Pause");
 	//output_mesh("Final");
+	cout << 1 << endl;
 	_grid_smooth->generate_new_grid();
 	//Smooth the old grid to generate the new grid
+	cout << 2 << endl;
 	reset_new_grid_geometry();
 	//Reset the geometry information of the new grid
+	cout << 3 << endl;
 	update_old_grid_geometry();
 	//Update the geometry information of the old grid
+	cout << 4 << endl;
 	old_grid_reconstruction();
+	cout << 5 << endl;
 	//Reconstruct the variable gradient and material surface on old grid
 	calculate_old_grid_size(coor_min,coor_max,cell_edge_max);
+	cout << 6 << endl;
 	//Prepare for the bucket generation
 	Tbucket_searching buckets(coor_min,coor_max,cell_edge_max);
 	//Put the cells in old grid into the bucket
@@ -183,7 +189,7 @@ void Tbody_ALE::remapping_variables()
 	Tcell_intersect intersection;
 	cout<<"remapping beginning!"<<endl;
 	cout<<"Completing ratio: ";
-	int cell_interval=_nume/1000;
+	int cell_interval=maxval(_nume/1000,1);
 	bool first=true;
 	double num_intersection=0;
 	#pragma omp parallel for schedule(dynamic) private(intersection,nx_min,ny_min,nz_min,nx_max,ny_max,nz_max,old_cell,new_cell,vertex_list)
@@ -632,7 +638,7 @@ void Tbody_ALE::input_body(ifstream &input)
 			TMAT_base** mat2;
 			mat1=new TMAT_base*[_num_material];
 			mat2=new TMAT_base*[_num_material];
-			for (int j = 0; j < _num_material; j++)
+			for (int j = 0; j < keyword.part_list.size(); j++)
 			{
 				EOS_id=keyword.part_list[j].EOS_id;
 				if (EOS_id==0 || keyword.EOS_list.size()==0)
@@ -648,15 +654,29 @@ void Tbody_ALE::input_body(ifstream &input)
 				mat2[j]=generate_material(this_mat,this_EOS,1);
 			}
 			//Create a new cell
-			_grid1._cell_list[i]=new Tcell_mixed_fluid(id,_num_material,node_ptr1,mat1);
-			_grid2._cell_list[i]=new Tcell_mixed_fluid(id,_num_material,node_ptr2,mat2);
-			//Initialize the volume fraction and material centroid
-			part_id=keyword.cell_8_list[i].part_id;
-			material_id=keyword.part_list[part_id-1].material_id;
-			_grid1._cell_list[i]->S_material_fraction(1,material_id-1);
-			_grid1._cell_list[i]->S_material_centroid(_grid1._cell_list[i]->G_cell_polyhedron()->G_centroid(),material_id-1);
-			_grid2._cell_list[i]->S_material_fraction(1,material_id-1);
-			_grid2._cell_list[i]->S_material_centroid(_grid2._cell_list[i]->G_cell_polyhedron()->G_centroid(),material_id-1);
+			if (_num_material == 1)
+			{
+				part_id = keyword.cell_8_list[i].part_id;
+				material_id = keyword.part_list[part_id - 1].material_id;
+				if (material_id==2)
+				{
+					double sss = 1;
+				}
+				_grid1._cell_list[i] = new Tcell_pure_fluid(id, node_ptr1, mat1[material_id-1]);
+				_grid2._cell_list[i] = new Tcell_pure_fluid(id, node_ptr2, mat2[material_id-1]);
+			}
+			else
+			{
+				_grid1._cell_list[i] = new Tcell_mixed_fluid(id, _num_material, node_ptr1, mat1);
+				_grid2._cell_list[i] = new Tcell_mixed_fluid(id, _num_material, node_ptr2, mat2);
+				//Initialize the volume fraction and material centroid
+				part_id=keyword.cell_8_list[i].part_id;
+				material_id=keyword.part_list[part_id-1].material_id;
+				_grid1._cell_list[i]->S_material_fraction(1,material_id-1);
+				_grid1._cell_list[i]->S_material_centroid(_grid1._cell_list[i]->G_cell_polyhedron()->G_centroid(),material_id-1);
+				_grid2._cell_list[i]->S_material_fraction(1,material_id-1);
+				_grid2._cell_list[i]->S_material_centroid(_grid2._cell_list[i]->G_cell_polyhedron()->G_centroid(),material_id-1);
+			}
 		}
 	}
 	//-------------------------------------------------------
@@ -817,10 +837,6 @@ void Tbody_ALE::input_body(ifstream &input)
 	//Initialize the nodal variables
 	for (int i = 0; i < _nump; i++)
 	{
-		if (i==61)
-		{
-			double a=0;
-		}
 		_nodeptr_list[i]->calculate_nodal_variables();
 	}
 	//Clear the variables on grid2

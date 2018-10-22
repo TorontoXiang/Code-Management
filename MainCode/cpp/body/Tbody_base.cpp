@@ -228,6 +228,10 @@ string Tbody_base::calculate_body_type_id()
 	{
 		return "02";
 	}
+	else if (_body_name=="body_brick")
+	{
+		return "03";
+	}
 	else
 	{
 		cout<<"Error:Invalid body name in calling calculate_body_type_id()"<<endl;

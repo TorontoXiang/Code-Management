@@ -53,6 +53,11 @@ Tinteraction_base* generate_interaction(Sinteraction interaction)
 		typedef Tbody_ALE* T1;typedef Tbody_ALE* T2;
 		return generate_interaction_with_type<T1,T2>(interaction);
 	}
+	else if (index=="02-03-00")
+	{
+		typedef Tbody_ALE* T1; typedef Tbody_brick* T2;
+		return generate_interaction_with_type<T1, T2>(interaction);
+	}
 	else
 	{
 		cout<<"Error: Invalid interaction group: "<<index<<endl;

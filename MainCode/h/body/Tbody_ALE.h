@@ -96,5 +96,7 @@ protected:
 	friend class Tgrid_smooth_OST;
 	friend class Tgrid_smooth_CST;
 	friend class Tgrid_smooth_PST;
+	template<class T1, class T2>
+	friend class Tinteraction_conode;
 };
 #endif

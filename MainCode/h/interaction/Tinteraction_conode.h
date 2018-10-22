@@ -7,6 +7,7 @@
 #include "Tbody_Lagrangian.h"
 #include <vector>
 #include "Tbucket_searching.h"
+#include "Tbody_brick.h"
 using namespace std;
 template<class T1,class T2>
 class Tinteraction_conode : public Tinteraction_base
