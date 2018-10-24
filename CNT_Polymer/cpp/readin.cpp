@@ -130,6 +130,11 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 			next_data(input);
 			input>>keyword.time_control.endtime;
 		}
+		else if (a == "*CONTROL_MOTION")
+		{
+			next_data(input);
+			input >> keyword.time_control.motiontime;
+		}
 		else if (a=="*CONTROL_TIMESTEP")
 		{
 			next_data(input);

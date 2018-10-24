@@ -12,6 +12,7 @@ void Tbody::calculate_force_in_body()
 	calculate_corner_force();
 	//Calculate the final nodal force
 	assemble_nodal_force();
+	Tcell_brick* ptr = _cellptr_list[909];
 	return;
 }
 void Tbody::assemble_nodal_force()
@@ -19,6 +20,11 @@ void Tbody::assemble_nodal_force()
 	for (int i = 0; i < _nume; i++)
 	{
 		_cellptr_list[i]->assemble_corner_force();
+	}
+	double ratio = 1;
+	for (int i = 0; i < _nump; i++)
+	{
+		_nodeptr_list[i]->_force = _nodeptr_list[i]->_force - _nodeptr_list[i]->_velocity*ratio;
 	}
 	return;
 }
@@ -91,6 +97,10 @@ void Tbody::calculate_time_step()
 	{
 		_dt=minval(_CFL * min_time_step,1.05*_dt_pre);
 	}
+	if (!_is_static)
+	{
+		_dt = minval(_dt, _motiontime - _current_time);
+	}
 	_dt = minval(_dt, _endtime - _current_time);
 	return;
 }
@@ -122,13 +132,14 @@ double Tbody::calculate_total_internal_energy()
 void Tbody::output_tecplot(ofstream& output, double ratio)
 {
 	output << "TITLE = \"Mesh for Shell Element\"" << endl;
-	output << "VARIABLES = \"X\",\"Y\",\"Z\"" << endl;
+	output << "VARIABLES = \"X\",\"Y\",\"Z\",\"VX\",\"VY\",\"VZ\"" << endl;
 	output << "ZONE F=FEPOINT,N=" << _nump << "," << "E=" << _nume << "," << "ET=BRICK" << endl;
-	vec3D dis;
+	vec3D dis, vel;
 	for (int i = 0; i < _nump; i++)
 	{
 		dis = _nodeptr_list[i]->calculate_displacement_amplify(ratio);
-		output << dis.x << " " << dis.y << " " << dis.z << endl;
+		vel = _nodeptr_list[i]->_velocity;
+		output << dis.x << " " << dis.y << " " << dis.z << " " << vel.x << " " << vel.y << " " << vel.z << endl;
 	}
 	for (int i = 0; i < _nume; i++)
 	{
@@ -165,6 +176,8 @@ void Tbody::input_irregular_grid(Skeyword& keyword)
 	_endtime = keyword.time_control.endtime;
 	_CFL = keyword.time_control.CFL;
 	_num_step = 0;
+	_is_static = false;
+	_motiontime = keyword.time_control.motiontime;
 	//----------------------------------------------------
 	//Read node list
 	//----------------------------------------------------
@@ -278,6 +291,8 @@ void Tbody::input_regular_grid(Skeyword& keyword)
 	_endtime = keyword.time_control.endtime;
 	_CFL = keyword.time_control.CFL;
 	_num_step = 0;
+	_is_static = false;
+	_motiontime = keyword.time_control.motiontime;
 	//Read the information about the regular grid
 	_x_min = keyword.regular_grid.x_min; _x_max = keyword.regular_grid.x_max;
 	_nx = keyword.regular_grid.nx; _ny = keyword.regular_grid.ny; _nz = keyword.regular_grid.nz;
@@ -302,7 +317,7 @@ void Tbody::input_regular_grid(Skeyword& keyword)
 				index = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*j + k;
 				dx.value(i*_interval.x, j*_interval.y, k*_interval.z);
 				coor = _x_min + dx;
-				Tnode new_node(index, coor.x, coor.y, coor.z);
+				Tnode new_node(index+1, coor.x, coor.y, coor.z);
 				_grid_polymer._node_list[index] = new_node;
 				_nodeptr_list[index] = &_grid_polymer._node_list[index];
 			}
@@ -528,5 +543,47 @@ void Tbody::apply_regular_bc(Sregular_grid_bc& bc)
 			}
 		}
 	}
+	return;
+}
+void Tbody::change_state()
+{
+	if (abs(_current_time-_motiontime)<1e-15)
+	{
+		for (int i = 0; i < _nump; i++)
+		{
+			Tnode* node_ptr = _nodeptr_list[i];
+			for (int j = 0; j < 3; j++)
+			{
+				if (node_ptr->_bc_type_position[j]==2)
+				{
+					node_ptr->_bc_velocity[j] = 0;
+				}
+			}
+		}
+		_is_static = true;
+	}
+	return;
+}
+void Tbody::calculate_average_stress(double(&stress)[6])
+{
+	double sxx = 0, syy = 0, szz = 0, sxz = 0, sxy = 0, syz = 0;
+	double total_volume = 0, cell_volume;
+	Tcell_brick* cell_ptr = NULL;
+	double sigma[6];
+	for (int i = 0; i < _nume; i++)
+	{
+		cell_ptr = _cellptr_list[i];
+		cell_volume = cell_ptr->_volume;
+		total_volume = total_volume + cell_volume;
+		cell_ptr->_mat_ptr->G_stress(sigma);
+		sxx = sxx + sigma[0] * cell_volume; syy = syy + sigma[1] * cell_volume;
+		szz = szz + sigma[2] * cell_volume; sxy = sxy + sigma[3] * cell_volume;
+		sxz = sxz + sigma[4] * cell_volume; syz = syz + sigma[5] * cell_volume;
+	}
+	sxx = sxx / total_volume; syy = syy / total_volume; szz = szz / total_volume;
+	sxy = sxy / total_volume; sxz = sxz / total_volume; syz = syz / total_volume;
+	stress[0] = sxx; stress[1] = syy; stress[2] = szz;
+	stress[3] = sxy; stress[4] = sxz; stress[5] = syz;
+	cout << total_volume << endl;
 	return;
 }

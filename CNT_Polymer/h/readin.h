@@ -66,6 +66,7 @@ struct Stime
 {
 	double endtime;        //The terminal time
 	double CFL;            //The CFL number
+	double motiontime;     //The time for applying the displacement
 };
 struct Sarti_vis
 {

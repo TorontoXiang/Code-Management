@@ -42,6 +42,10 @@ public:
 	//Output the Tecplot mesh
 	void Output_Curve();
 	//Output the history curve for specific nodes and cells
+	void change_state();
+	//Change the state form dynamic to static
+	void calculate_average_stress(double(&stress)[6]);
+	//Calculate the average stress in the body
 
 	//Access functions
 	double G_current_time() { return _current_time; };
@@ -69,6 +73,8 @@ protected:
 	int _num_step;          //Simulation steps
 	double _dt,_dt_pre;     //Current and previous time increment
 	double _endtime;        //The end time
+	double _motiontime;     //The time for applying the displacement
+	bool _is_static;        //Whether the boundary motion is terminated
 	double _current_time;   //The current time
 	double _CFL;            //The CFL number
 	vec3D _gravity;         //The gravity in this body
