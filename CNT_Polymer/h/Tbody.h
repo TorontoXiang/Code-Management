@@ -3,6 +3,7 @@
 //Define the brick body
 #include "readin.h"
 #include "Tcell_brick.h"
+#include "Tcell_CNT.h"
 #include "Tnode.h"
 #include <vector>
 #include <fstream>
@@ -17,8 +18,10 @@ public:
 	//Calculate the nodal acceleration caused by the body 
 	void calculate_time_step();
 	//Calculate the time step 
-	void input_body(ifstream& input);
-	//Input the shell body information from input data
+	void input_Polymer(ifstream& input);
+	//Input the polymer from input data
+	void input_CNT(ifstream& input);
+	//Input the CNT from the input data
 	void input_simulation_control();
 	//Input the control parameters of the simulation
 	void update_grid();
@@ -46,6 +49,10 @@ public:
 	//Change the state form dynamic to static
 	void calculate_average_stress(double(&stress)[6]);
 	//Calculate the average stress in the body
+	void output_CNT_stress();
+	//Output the internal force of a CNT
+	void output_Polymer_stress();
+	//Output the polymer stress
 
 	//Access functions
 	double G_current_time() { return _current_time; };
@@ -64,9 +71,32 @@ protected:
 		vector<Tcell_brick> _cell_list;
 		vector<Tnode> _node_list;
 	};
+	struct Sbar_grid
+	{
+		vector<Tcell_CNT> _cell_list;
+		vector<Tnode_CNT> _node_list;
+	};
+	struct Snode_stress
+	{
+		Snode_stress() {node_volume = sxx = syy = szz = sxy = syz = sxz = eqs = 0;}
+		double node_volume;
+		double sxx, syy, szz, sxy, syz, sxz;
+		double eqs;
+		void calculate_average();
+	};
 
-	int _nume;              //Number of element
-	int _nump;              //Number of node
+	int _nume_Polymer;              //Number of element
+	int _nump_Polymer;              //Number of node
+	Sbrick_grid _grid_polymer;
+	vector<Tcell_brick*> _cellptr_list_Polymer;
+	vector<Tnode*> _nodeptr_list_Polymer;
+
+	int _nume_CNT;
+	int _nump_CNT;
+	Sbar_grid _grid_CNT;
+	vector<Tcell_CNT*> _cellptr_list_CNT;
+	vector<Tnode_CNT*> _nodeptr_list_CNT;
+
 	int _nx, _ny, _nz;      //Number of cell in x,y,z direction (Only for regular grid)
 	vec3D _x_min, _x_max;   //Extreme coordinate of the regular grid (Only for regular grid)
 	vec3D _interval;        //The coordinate increment at x,y,z direction (Only for regular grid)
@@ -79,10 +109,6 @@ protected:
 	double _CFL;            //The CFL number
 	vec3D _gravity;         //The gravity in this body
 	vector<Sexternal_load> _external_load_list;     //The external load list
-
-	Sbrick_grid _grid_polymer;
-	vector<Tcell_brick*> _cellptr_list;
-	vector<Tnode*> _nodeptr_list;
 
 	vector<Scurve_output*> _curve_out_list;   //Output curve
 	Smesh_output* _mesh_out;                  //Output Tecplot mesh
@@ -105,6 +131,19 @@ protected:
 	//Input a regular grid
 	void apply_regular_bc(Sregular_grid_bc& bc);
 	//Apply the boundary condition for a regular grid
+	void calculate_CNT_location();
+	//Calculate the location of the CNT node and CNT cell;
+	void CNT_location(Tnode_CNT* node_ptr);
+	void CNT_location(Tcell_CNT* cell_ptr);
+	//return the location of a coordinate and its iosparametic coordinates
+	void contribute_CNT_mass(Tcell_CNT* cell_ptr);
+	//Contribute the CNT mass to the polymer cell
+	void contribute_CNT_force(Tnode_CNT* node_ptr);
+	//Contribute the CNT force to the polymer cell
+	void update_CNT_position(Tnode_CNT* node_ptr);
+	//Update the position of the CNT
+	void calculate_CNT_force();
+	//Calculate the force in the CNT
 
 
 };

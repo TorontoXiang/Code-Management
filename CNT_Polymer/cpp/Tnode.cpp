@@ -109,3 +109,11 @@ void Tnode::access_nodal_bc(int (&bc_type_pos)[3],double (&bc_vel)[3])
 	}
 	return;
 }
+Tnode_CNT::Tnode_CNT(int id, double x, double y, double z)
+{
+	_id = id;
+	_position.value(x, y, z);
+	_position0 = _position;
+	_location_id = -1;
+	_ix = _iy = _iz = -2;
+}

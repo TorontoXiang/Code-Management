@@ -52,4 +52,20 @@ protected:
 	friend class Tcell_brick;
 	friend class Tbody;
 };
+class Tnode_CNT
+{
+public:
+	Tnode_CNT() {};
+	Tnode_CNT(int id, double x, double y, double z);
+private:
+	int _id;               //node id
+	vec3D _position0;      //The original position 
+	vec3D _position;       //The current position
+	vec3D _force;          //nodal force
+	int _location_id;      //The location of the node in the polymer
+	double _ix, _iy, _iz;  //The isoparametric coordinate of the node in the polymer cell
+
+	friend class Tcell_CNT;
+	friend class Tbody;
+};
 #endif

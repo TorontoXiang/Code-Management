@@ -248,6 +248,22 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 				keyword.cell_8_list.push_back(new_cell);
 			}
 		}
+		else if (a=="*ELEMENT_BAR")
+		{
+			while (!exam_keyword(input))
+			{
+				Scell_2 new_cell;
+				input >> new_cell.cell_id >> new_cell.part_id >> new_cell.IEN[0] >> new_cell.IEN[1];
+				keyword.cell_2_list.push_back(new_cell);
+			}
+		}
+		else if (a=="*SECTION_BAR")
+		{
+			Ssection new_section;
+			next_data(input);
+			input >> new_section.scetion_id >> new_section.area;
+			keyword.section_list.push_back(new_section);
+		}
 		else if (a=="*REGULAR_GRID")
 		{
 			keyword.is_regular_grid = true;

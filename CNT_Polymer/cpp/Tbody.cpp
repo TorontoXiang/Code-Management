@@ -4,6 +4,14 @@
 #include <iomanip>
 #include "TMAT_base.h"
 #include "readin.h"
+#include "Shape_function.h"
+void Tbody::Snode_stress::calculate_average()
+{
+	sxx = sxx / node_volume; syy = syy / node_volume; szz = szz / node_volume;
+	sxy = sxy / node_volume; sxz = sxz / node_volume; syz = syz / node_volume;
+	eqs = eqs / node_volume;
+	return;
+}
 void Tbody::calculate_force_in_body()
 {
 	//Apply the external force
@@ -12,51 +20,58 @@ void Tbody::calculate_force_in_body()
 	calculate_corner_force();
 	//Calculate the final nodal force
 	assemble_nodal_force();
-	Tcell_brick* ptr = _cellptr_list[909];
+	//Calculate the froce in the CNT
+	calculate_CNT_force();
+	//Apply the froce from the CNT
+	for (int i = 0; i < _nump_CNT; i++)
+	{
+		contribute_CNT_force(_nodeptr_list_CNT[i]);
+	}
 	return;
 }
 void Tbody::assemble_nodal_force()
 {
-	for (int i = 0; i < _nume; i++)
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
-		_cellptr_list[i]->assemble_corner_force();
+		_cellptr_list_Polymer[i]->assemble_corner_force();
 	}
 	double ratio = 1;
-	for (int i = 0; i < _nump; i++)
+	for (int i = 0; i < _nump_Polymer; i++)
 	{
-		_nodeptr_list[i]->_force = _nodeptr_list[i]->_force - _nodeptr_list[i]->_velocity*ratio;
+		_nodeptr_list_Polymer[i]->_force = _nodeptr_list_Polymer[i]->_force - _nodeptr_list_Polymer[i]->_velocity*ratio;
 	}
 	return;
 }
 void Tbody::update_grid()
 {
 	double dt_vel = 0.5*(_dt + _dt_pre);
-	for (int i = 0; i < _nump; i++)
+	for (int i = 0; i < _nump_Polymer; i++)
 	{
 		//Calculate the velocity at the next time step
-		_nodeptr_list[i]->update_vel(dt_vel);
+		_nodeptr_list_Polymer[i]->update_vel(dt_vel);
 		//Calculate the position at the next time point
-		_nodeptr_list[i]->update_pos(_dt);
+		_nodeptr_list_Polymer[i]->update_pos(_dt);
+	}
+	//Update the position of CNT
+	for (int i = 0; i < _nump_CNT; i++)
+	{
+		update_CNT_position(_nodeptr_list_CNT[i]);
 	}
 	return;
 }
 void Tbody::calculate_corner_force()
 {
-	for (int i = 0; i < _nume; i++)
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
-		if (i==200)
-		{
-			double s = 1;
-		}
-		_cellptr_list[i]->calculate_corner_force(_dt_pre);
+		_cellptr_list_Polymer[i]->calculate_corner_force(_dt_pre);
 	}
 	return;
 }
 void Tbody::calculate_final_acceleration()
 {
-	for (int i = 0; i < _nump; i++)
+	for (int i = 0; i < _nump_Polymer; i++)
 	{
-		_nodeptr_list[i]->calculate_acceleration();
+		_nodeptr_list_Polymer[i]->calculate_acceleration();
 	}
 	return;
 }
@@ -75,21 +90,21 @@ void Tbody::apply_external_force()
 		for (int j = 0; j < num_node; j++)
 		{
 			int id = _external_load_list[i].node_id[j];
-			_nodeptr_list[id - 1]->apply_external_force(direction, magnitude);
+			_nodeptr_list_Polymer[id - 1]->apply_external_force(direction, magnitude);
 		}
 	}
 	//Apply gravity
-	for (int i = 0; i < _nump; i++)
+	for (int i = 0; i < _nump_Polymer; i++)
 	{
-		_nodeptr_list[i]->apply_gravity(_gravity);
+		_nodeptr_list_Polymer[i]->apply_gravity(_gravity);
 	}
 }
 void Tbody::calculate_time_step()
 {
 	double min_time_step = 100000;
-	for (int i = 0; i < _nume; i++)
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
-		min_time_step = minval(min_time_step, _cellptr_list[i]->calculate_time_step());
+		min_time_step = minval(min_time_step, _cellptr_list_Polymer[i]->calculate_time_step());
 	}
 	_dt_pre = _dt;
 	_dt = _CFL * min_time_step;
@@ -111,18 +126,22 @@ void Tbody::start_up_step()
 }
 void Tbody::calculate_nodal_inertance()
 {
-	for (int i = 0; i < _nume; i++)
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
-		_cellptr_list[i]->assemble_corner_inertance();
+		_cellptr_list_Polymer[i]->assemble_corner_inertance();
+	}
+	for (int i = 0; i < _nume_CNT; i++)
+	{
+		contribute_CNT_mass(_cellptr_list_CNT[i]);
 	}
 	return;
 }
 double Tbody::calculate_total_internal_energy()
 {
 	double total_internal_energy = 0;
-	for (int i = 0; i < _nume; i++)
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
-		total_internal_energy = total_internal_energy + _cellptr_list[i]->G_strain_energy();
+		total_internal_energy = total_internal_energy + _cellptr_list_Polymer[i]->G_strain_energy();
 	}
 	return total_internal_energy;
 }
@@ -132,20 +151,53 @@ double Tbody::calculate_total_internal_energy()
 void Tbody::output_tecplot(ofstream& output, double ratio)
 {
 	output << "TITLE = \"Mesh for Shell Element\"" << endl;
-	output << "VARIABLES = \"X\",\"Y\",\"Z\",\"VX\",\"VY\",\"VZ\"" << endl;
-	output << "ZONE F=FEPOINT,N=" << _nump << "," << "E=" << _nume << "," << "ET=BRICK" << endl;
-	vec3D dis, vel;
-	for (int i = 0; i < _nump; i++)
+	output << "VARIABLES = \"X\",\"Y\",\"Z\",\"DX\",\"DY\",\"DZ\",\"VX\",\"VY\",\"VZ\",\"SXX\",\"SYY\",\"SZZ\",\"SXY\",\"SXZ\",\"SYZ\",\"EQS\"" << endl;
+	output << "ZONE F=FEPOINT,N=" << _nump_Polymer << "," << "E=" << _nume_Polymer << "," << "ET=BRICK" << endl;
+	vec3D pos, dis, vel;
+	Snode_stress* node_stress;
+	node_stress = new Snode_stress[_nump_Polymer];
+	double eqs;
+	//Calculate the nodal stress
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
-		dis = _nodeptr_list[i]->calculate_displacement_amplify(ratio);
-		vel = _nodeptr_list[i]->_velocity;
-		output << dis.x << " " << dis.y << " " << dis.z << " " << vel.x << " " << vel.y << " " << vel.z << endl;
+		Tcell_brick* cell_ptr=_cellptr_list_Polymer[i];
+		double sig[6], volume = cell_ptr->_volume*0.125;
+		cell_ptr->_mat_ptr->G_stress(sig);
+		double sxx = sig[0], syy = sig[1], szz = sig[2], sxy = sig[3], sxz = sig[4], syz = sig[5];
+		double eqs = cell_ptr->_mat_ptr->calculate_equivalent_stress();
+		for (int j = 0; j < 8; j++)
+		{
+			int node_id = cell_ptr->_node_ptr[j]->_id;
+			node_stress[node_id - 1].node_volume = node_stress[node_id - 1].node_volume + volume;
+			node_stress[node_id - 1].sxx = node_stress[node_id - 1].sxx + sxx*volume;
+			node_stress[node_id - 1].syy = node_stress[node_id - 1].syy + syy * volume;
+			node_stress[node_id - 1].szz = node_stress[node_id - 1].szz + szz * volume;
+			node_stress[node_id - 1].sxy = node_stress[node_id - 1].sxy + sxy * volume;
+			node_stress[node_id - 1].sxz = node_stress[node_id - 1].sxz + sxz * volume;
+			node_stress[node_id - 1].syz = node_stress[node_id - 1].syz + syz * volume;
+			node_stress[node_id - 1].eqs = node_stress[node_id - 1].eqs + eqs * volume;
+		}
 	}
-	for (int i = 0; i < _nume; i++)
+	for (int i = 0; i < _nump_Polymer; i++)
+	{
+		node_stress[i].calculate_average();
+	}
+	for (int i = 0; i < _nump_Polymer; i++)
+	{
+		pos = _nodeptr_list_Polymer[i]->calculate_displacement_amplify(ratio);
+		vel = _nodeptr_list_Polymer[i]->_velocity;
+		dis = _nodeptr_list_Polymer[i]->_position - _nodeptr_list_Polymer[i]->_position0;
+		output << pos.x << " " << pos.y << " " << pos.z << " " << dis.x << " " << dis.y << " " << dis.z<<" ";
+		output << vel.x << " " << vel.y << " " << vel.z << " ";
+		output << node_stress[i].sxx << " " << node_stress[i].syy << " " << node_stress[i].szz<<" ";
+		output << node_stress[i].sxy << " " << node_stress[i].sxz << " " << node_stress[i].syz<<" ";
+		output << node_stress[i].eqs << endl;
+	}
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			output << _cellptr_list[i]->_node_ptr[j]->_id << " ";
+			output << _cellptr_list_Polymer[i]->_node_ptr[j]->_id << " ";
 		}
 		output << endl;
 	}
@@ -154,7 +206,7 @@ void Tbody::output_tecplot(ofstream& output, double ratio)
 //------------------------------------------------------------------------------------
 //Input function
 //------------------------------------------------------------------------------------
-void Tbody::input_body(ifstream& input)
+void Tbody::input_Polymer(ifstream& input)
 {
 	Skeyword keyword;
 	read_in_keyword_file(input, keyword);
@@ -171,8 +223,8 @@ void Tbody::input_body(ifstream& input)
 void Tbody::input_irregular_grid(Skeyword& keyword)
 {
 	//Read the body global information from keyword
-	_nume = keyword.cell_8_list.size();
-	_nump = keyword.node_list.size();
+	_nume_Polymer = keyword.cell_8_list.size();
+	_nump_Polymer = keyword.node_list.size();
 	_endtime = keyword.time_control.endtime;
 	_CFL = keyword.time_control.CFL;
 	_num_step = 0;
@@ -183,9 +235,9 @@ void Tbody::input_irregular_grid(Skeyword& keyword)
 	//----------------------------------------------------
 	int id;
 	double x, y, z;
-	_grid_polymer._node_list.resize(_nump);
-	_nodeptr_list.resize(_nump);
-	for (int i = 0; i < _nump; i++)
+	_grid_polymer._node_list.resize(_nump_Polymer);
+	_nodeptr_list_Polymer.resize(_nump_Polymer);
+	for (int i = 0; i < _nump_Polymer; i++)
 	{
 		id = keyword.node_list[i].id;
 		x = keyword.node_list[i].x;
@@ -193,23 +245,23 @@ void Tbody::input_irregular_grid(Skeyword& keyword)
 		z = keyword.node_list[i].z;
 		Tnode new_node(id, x, y, z);
 		_grid_polymer._node_list[i] = new_node;
-		_nodeptr_list[i] = &_grid_polymer._node_list[i];
+		_nodeptr_list_Polymer[i] = &_grid_polymer._node_list[i];
 	}
 	//-----------------------------------------------------
 	//Read cell list
 	//-----------------------------------------------------
-	_grid_polymer._cell_list.resize(_nume);
-	_cellptr_list.resize(_nume);
+	_grid_polymer._cell_list.resize(_nume_Polymer);
+	_cellptr_list_Polymer.resize(_nume_Polymer);
 	int part_id, material_id;
 	Tnode* node_ptr[8];
-	for (int i = 0; i < _nume; i++)
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
 		//Read cell id and IEN
 		id = keyword.cell_8_list[i].cell_id;
 		for (int j = 0; j < 8; j++)
 		{
 			int IENj = keyword.cell_8_list[i].IEN[j];
-			node_ptr[j] = _nodeptr_list[IENj - 1];
+			node_ptr[j] = _nodeptr_list_Polymer[IENj - 1];
 		}
 		//Read cell's material properties
 		part_id = keyword.cell_8_list[i].part_id;
@@ -220,7 +272,7 @@ void Tbody::input_irregular_grid(Skeyword& keyword)
 		//Create a new cell
 		Tcell_brick new_cell(id, node_ptr, mat);
 		_grid_polymer._cell_list[i] = new_cell;
-		_cellptr_list[i] = &_grid_polymer._cell_list[i];
+		_cellptr_list_Polymer[i] = &_grid_polymer._cell_list[i];
 	}
 	//-------------------------------------------------------
 	//Read boundary condition
@@ -271,16 +323,16 @@ void Tbody::input_irregular_grid(Skeyword& keyword)
 	//------------------------------------------------------------------------------
 	if (keyword.is_initial_vel)
 	{
-		for (int i = 0; i < _nump; i++)
+		for (int i = 0; i < _nump_Polymer; i++)
 		{
-			_nodeptr_list[i]->_velocity = keyword.initial_vel;
+			_nodeptr_list_Polymer[i]->_velocity = keyword.initial_vel;
 		}
 	}
-	for (int i = 0; i < _nump; i++)
+	for (int i = 0; i < _nump_Polymer; i++)
 	{
-		if (abs(_nodeptr_list[i]->_position.z) < 1e-10)
+		if (abs(_nodeptr_list_Polymer[i]->_position.z) < 1e-10)
 		{
-			_nodeptr_list[i]->_bc_type_position[2] = 1;
+			_nodeptr_list_Polymer[i]->_bc_type_position[2] = 1;
 		}
 	}
 	return;
@@ -296,14 +348,14 @@ void Tbody::input_regular_grid(Skeyword& keyword)
 	//Read the information about the regular grid
 	_x_min = keyword.regular_grid.x_min; _x_max = keyword.regular_grid.x_max;
 	_nx = keyword.regular_grid.nx; _ny = keyword.regular_grid.ny; _nz = keyword.regular_grid.nz;
-	_nump = (_nx + 1)*(_ny + 1)*(_nz + 1);
-	_nume = _nx * _ny*_nz;
-	_grid_polymer._node_list.resize(_nump);
-	_nodeptr_list.resize(_nump);
-	_grid_polymer._cell_list.resize(_nume);
-	_cellptr_list.resize(_nume);
+	_nump_Polymer = (_nx + 1)*(_ny + 1)*(_nz + 1);
+	_nume_Polymer = _nx * _ny*_nz;
+	_grid_polymer._node_list.resize(_nump_Polymer);
+	_nodeptr_list_Polymer.resize(_nump_Polymer);
+	_grid_polymer._cell_list.resize(_nume_Polymer);
+	_cellptr_list_Polymer.resize(_nume_Polymer);
 	_interval.x = (_x_max - _x_min).x / _nx;
-	_interval.y = (_x_max - _x_min).x / _ny;
+	_interval.y = (_x_max - _x_min).y / _ny;
 	_interval.z = (_x_max - _x_min).z / _nz;
 	//Generate the node coordinate
 	vec3D dx,coor;
@@ -319,7 +371,7 @@ void Tbody::input_regular_grid(Skeyword& keyword)
 				coor = _x_min + dx;
 				Tnode new_node(index+1, coor.x, coor.y, coor.z);
 				_grid_polymer._node_list[index] = new_node;
-				_nodeptr_list[index] = &_grid_polymer._node_list[index];
+				_nodeptr_list_Polymer[index] = &_grid_polymer._node_list[index];
 			}
 		}
 	}
@@ -339,14 +391,14 @@ void Tbody::input_regular_grid(Skeyword& keyword)
 				index_node[6] = (_ny + 1)*(_nz + 1)*(i + 1) + (_nz + 1)*(j + 1) + k + 1; index_node[7] = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*(j + 1) + k + 1;
 				for (int n = 0; n < 8; n++)
 				{
-					node_ptr[n] = _nodeptr_list[index_node[n]];
+					node_ptr[n] = _nodeptr_list_Polymer[index_node[n]];
 				}
 				Smaterial this_mat = keyword.material_list[0];
 				TMAT_base* mat;
 				mat = generate_material(this_mat, 0);
 				Tcell_brick new_cell(index, node_ptr, mat);
 				_grid_polymer._cell_list[index] = new_cell;
-				_cellptr_list[index] = &_grid_polymer._cell_list[index];
+				_cellptr_list_Polymer[index] = &_grid_polymer._cell_list[index];
 			}
 		}
 	}
@@ -356,6 +408,62 @@ void Tbody::input_regular_grid(Skeyword& keyword)
 		Sregular_grid_bc bc = keyword.regular_bc_list[i];
 		apply_regular_bc(bc);
 	}
+	return;
+}
+void Tbody::input_CNT(ifstream& input)
+{
+	Skeyword keyword;
+	read_in_keyword_file(input, keyword);
+	//Read the body global information from keyword
+	_nume_CNT = keyword.cell_2_list.size();
+	_nump_CNT = keyword.node_list.size();
+	//----------------------------------------------------
+	//Read node list
+	//----------------------------------------------------
+	int id;
+	double x, y, z;
+	_grid_CNT._node_list.resize(_nump_CNT);
+	_nodeptr_list_CNT.resize(_nump_CNT);
+	for (int i = 0; i < _nump_CNT; i++)
+	{
+		id = keyword.node_list[i].id;
+		x = keyword.node_list[i].x;
+		y = keyword.node_list[i].y;
+		z = keyword.node_list[i].z;
+		Tnode_CNT new_node(id, x, y, z);
+		_grid_CNT._node_list[i] = new_node;
+		_nodeptr_list_CNT[i] = &_grid_CNT._node_list[i];
+	}
+	//-----------------------------------------------------
+	//Read cell list
+	//-----------------------------------------------------
+	_grid_CNT._cell_list.resize(_nume_CNT);
+	_cellptr_list_CNT.resize(_nume_CNT);
+	int part_id, material_id, section_id;
+	Tnode_CNT* node_ptr[2];
+	for (int i = 0; i < _nume_CNT; i++)
+	{
+		//Read cell id and IEN
+		id = keyword.cell_2_list[i].cell_id;
+		for (int j = 0; j < 2; j++)
+		{
+			int IENj = keyword.cell_2_list[i].IEN[j];
+			node_ptr[j] = _nodeptr_list_CNT[IENj - 1];
+		}
+		//Read cell's material properties
+		part_id = keyword.cell_2_list[i].part_id;
+		material_id = keyword.part_list[part_id - 1].material_id;
+		section_id = keyword.part_list[part_id - 1].section_id;
+		double area = keyword.section_list[section_id - 1].area;
+		Smaterial this_mat = keyword.material_list[material_id - 1];
+		TMAT_base* mat;
+		mat = generate_material(this_mat, 0);
+		//Create a new cell
+		Tcell_CNT new_cell(id, node_ptr, area, mat);
+		_grid_CNT._cell_list[i] = new_cell;
+		_cellptr_list_CNT[i] = &_grid_CNT._cell_list[i];
+	}
+	calculate_CNT_location();
 	return;
 }
 void Tbody::create_curve(int type, int id)
@@ -393,10 +501,10 @@ void Tbody::input_simulation_control()
 			while (!exam_keyword(input))
 			{
 				input >> node_id;
-				if (node_id >= _nump)
+				if (node_id >= _nump_Polymer)
 				{
 					cout << "Error: Node ID" << node_id << " excess" << endl;
-					cout << "Number of node in body is " << _nump << endl;
+					cout << "Number of node in body is " << _nump_Polymer << endl;
 					system("Pause");
 					exit(0);
 				}
@@ -409,10 +517,10 @@ void Tbody::input_simulation_control()
 			while (!exam_keyword(input))
 			{
 				input >> cell_id;
-				if (cell_id >= _nume)
+				if (cell_id >= _nume_Polymer)
 				{
 					cout << "Error: Cell ID " << cell_id << " excess" << endl;
-					cout << "Number of cell in body is " << _nume << endl;
+					cout << "Number of cell in body is " << _nume_Polymer << endl;
 					system("Pause");
 					exit(0);
 				}
@@ -473,7 +581,7 @@ void Tbody::Output_Curve()
 	int num_curve = _curve_out_list.size();
 	int type, id;
 	Tnode* node_ptr;
-	Tcell_brick* cell_ptr;
+	//Tcell_brick* cell_ptr;
 	for (int i = 0; i < num_curve; i++)
 	{
 		type = _curve_out_list[i]->_type;
@@ -481,7 +589,7 @@ void Tbody::Output_Curve()
 		_curve_out_list[i]->output.precision(10);
 		if (type == 0)
 		{
-			node_ptr = _nodeptr_list[id];
+			node_ptr = _nodeptr_list_Polymer[id];
 			vec3D dis = node_ptr->calculate_displacement();
 			_curve_out_list[i]->output << setw(20) << _current_time << " ";
 			_curve_out_list[i]->output << setw(20) << dis.x << setw(20) << dis.y << setw(20) << dis.z << endl;
@@ -530,7 +638,7 @@ void Tbody::apply_regular_bc(Sregular_grid_bc& bc)
 			for (int k = nz_min; k < nz_max; k++)
 			{
 				int index = (_ny + 1)*(_nz + 1)*i + (_nz + 1)*j + k;
-				Tnode* nodeptr = _nodeptr_list[index];
+				Tnode* nodeptr = _nodeptr_list_Polymer[index];
 				if (bc.bc_type==0)
 				{
 					nodeptr->_bc_type_position[bc.direction] = 1;
@@ -549,9 +657,9 @@ void Tbody::change_state()
 {
 	if (abs(_current_time-_motiontime)<1e-15)
 	{
-		for (int i = 0; i < _nump; i++)
+		for (int i = 0; i < _nump_Polymer; i++)
 		{
-			Tnode* node_ptr = _nodeptr_list[i];
+			Tnode* node_ptr = _nodeptr_list_Polymer[i];
 			for (int j = 0; j < 3; j++)
 			{
 				if (node_ptr->_bc_type_position[j]==2)
@@ -570,9 +678,9 @@ void Tbody::calculate_average_stress(double(&stress)[6])
 	double total_volume = 0, cell_volume;
 	Tcell_brick* cell_ptr = NULL;
 	double sigma[6];
-	for (int i = 0; i < _nume; i++)
+	for (int i = 0; i < _nume_Polymer; i++)
 	{
-		cell_ptr = _cellptr_list[i];
+		cell_ptr = _cellptr_list_Polymer[i];
 		cell_volume = cell_ptr->_volume;
 		total_volume = total_volume + cell_volume;
 		cell_ptr->_mat_ptr->G_stress(sigma);
@@ -585,5 +693,158 @@ void Tbody::calculate_average_stress(double(&stress)[6])
 	stress[0] = sxx; stress[1] = syy; stress[2] = szz;
 	stress[3] = sxy; stress[4] = sxz; stress[5] = syz;
 	cout << total_volume << endl;
+	return;
+}
+void Tbody::calculate_CNT_location()
+{
+	vec3D coor;
+	for (int i = 0; i < _nump_CNT; i++)
+	{
+		CNT_location(_nodeptr_list_CNT[i]);
+	}
+	for (int i = 0; i < _nume_CNT; i++)
+	{
+		CNT_location(_cellptr_list_CNT[i]);
+	}
+	return;
+}
+void Tbody::CNT_location(Tnode_CNT* node_ptr)
+{
+	vec3D coor = node_ptr->_position;
+	vec3D delta = coor - _x_min;
+	double ix, iy, iz;
+	int nx = (int)floor(delta.x / _interval.x);
+	int ny = (int)floor(delta.y / _interval.y);
+	int nz = (int)floor(delta.z / _interval.z);
+	nx = minval(nx, _nx - 1); ny = minval(ny, _ny - 1); nz = minval(nz, _nz - 1);
+	node_ptr->_location_id = _ny * _nz*nx + _nz * ny + nz;
+	double dx = coor.x - nx * _interval.x;
+	ix = node_ptr->_ix = -1 + 2 * dx / _interval.x;
+	double dy = coor.y - ny * _interval.y;
+	iy = node_ptr->_iy = -1 + 2 * dy / _interval.y;
+	double dz = coor.z - nz * _interval.z;
+	iz = node_ptr->_iz = -1 + 2 * dz / _interval.z;
+	//if (abs(ix)>1 || abs(iy)>1 || abs(iz)>1)
+	//{
+	//	cout << "Error: The standard coordiante excess!" << endl;
+	//	system("Pause");
+	//	exit(0);
+	//}
+	return;
+}
+void Tbody::CNT_location(Tcell_CNT* cell_ptr)
+{
+	vec3D coor = ((cell_ptr->_node_ptr[0]->_position) + (cell_ptr->_node_ptr[1]->_position))*0.5;
+	vec3D delta = coor - _x_min;
+	int nx = (int)floor(delta.x / _interval.x);
+	int ny = (int)floor(delta.y / _interval.y);
+	int nz = (int)floor(delta.z / _interval.z);
+	nx = minval(nx, _nx - 1); ny = minval(ny, _ny - 1); nz = minval(nz, _nz - 1);
+	cell_ptr->_location_id = _ny * _nz*nx + _nz * ny + nz;
+	double dx = coor.x - nx * _interval.x;
+	double ix, iy, iz;
+	ix = cell_ptr->_ix = -1 + 2 * dx / _interval.x;
+	double dy = coor.y - ny * _interval.y;
+	iy = cell_ptr->_iy = -1 + 2 * dy / _interval.y;
+	double dz = coor.z - nz * _interval.z;
+	iz = cell_ptr->_iz = -1 + 2 * dz / _interval.z;
+	//if (abs(ix) > 1 || abs(iy) > 1 || abs(iz) > 1)
+	//{
+	//	cout << "Error: The standard coordiante excess!" << endl;
+	//	system("Pause");
+	//	exit(0);
+	//}
+	return;
+}
+void Tbody::contribute_CNT_mass(Tcell_CNT* cell_ptr)
+{
+	double N[8], ix = cell_ptr->_ix, iy = cell_ptr->_iy, iz = cell_ptr->_iz;
+	int Polymer_cell_id = cell_ptr->_location_id;
+	double mass_CNT = cell_ptr->_l0*cell_ptr->_area*cell_ptr->_mat_ptr->G_density();
+	Tcell_brick* cellptr_polymer = _cellptr_list_Polymer[Polymer_cell_id];
+	for (int i = 0; i < 8; i++)
+	{
+		N[i] = N_brick_8(i, ix, iy, iz);
+		cellptr_polymer->_node_ptr[i]->_mass = cellptr_polymer->_node_ptr[i]->_mass + N[i] * mass_CNT;
+	}
+	return;
+}
+void Tbody::contribute_CNT_force(Tnode_CNT* node_ptr)
+{
+	double N[8], ix = node_ptr->_ix, iy = node_ptr->_iy, iz = node_ptr->_iz;
+	int Polymer_cell_id = node_ptr->_location_id;
+	vec3D force_CNT2Polymer = node_ptr->_force;
+	Tcell_brick* cellptr_polymer = _cellptr_list_Polymer[Polymer_cell_id];
+	for (int i = 0; i < 8; i++)
+	{
+		N[i] = N_brick_8(i, ix, iy, iz);
+		cellptr_polymer->_node_ptr[i]->_force = cellptr_polymer->_node_ptr[i]->_force + force_CNT2Polymer*N[i];
+	}
+	//Initialize the CNT force after the contribution
+	node_ptr->_force.value(0, 0, 0);
+	return;
+}
+void Tbody::update_CNT_position(Tnode_CNT* node_ptr)
+{
+	double N[8], ix = node_ptr->_ix, iy = node_ptr->_iy, iz = node_ptr->_iz;
+	int Polymer_cell_id = node_ptr->_location_id;
+	Tcell_brick* cellptr_polymer = _cellptr_list_Polymer[Polymer_cell_id];
+	vec3D temp;
+	for (int i = 0; i < 8; i++)
+	{
+		N[i] = N_brick_8(i, ix, iy, iz);
+		temp = temp + cellptr_polymer->_node_ptr[i]->_position * N[i];
+	}
+	node_ptr->_position = temp;
+	return;
+}
+void Tbody::calculate_CNT_force()
+{
+	for (int i = 0; i < _nume_CNT; i++)
+	{
+		_cellptr_list_CNT[i]->calculate_corner_force();
+		_cellptr_list_CNT[i]->assemble_corner_force();
+	}
+	return;
+}
+void Tbody::output_CNT_stress()
+{
+	ofstream output;
+	output.open("CNT_Result.dat");
+	Tcell_CNT* cellptr;
+	output << "Cell force result" << endl;
+	for (int i = 0; i < _nume_CNT; i++)
+	{
+		cellptr = _cellptr_list_CNT[i];
+		cellptr->calculate_corner_force();
+		output << i<<" "<<cellptr->_corner_force[0].x << " "<<cellptr->_corner_force[0].y << " " << cellptr->_corner_force[0].z << endl;
+		_cellptr_list_CNT[i]->assemble_corner_force();
+	}
+	output << "Node force result" << endl;
+	Tnode_CNT* nodeptr;
+	for (int i = 0; i < _nump_CNT; i++)
+	{
+		nodeptr = _nodeptr_list_CNT[i];
+		output << i << " " << nodeptr->_force.x << " " << nodeptr->_force.y << " " << nodeptr->_force.z << endl;
+	}
+	output << "Node coordinate" << endl;
+	for (int i = 0; i < _nump_CNT; i++)
+	{
+		nodeptr = _nodeptr_list_CNT[i];
+		output << "k,"<< i << "," << nodeptr->_position.x << "," << nodeptr->_position.y << "," << nodeptr->_position.z << endl;
+	}
+}	
+void Tbody::output_Polymer_stress()
+{
+	Tcell_brick* cellptr;
+	ofstream output;
+	output.open("Polymer_Result.dat");
+	double sig[6];
+	for (int i = 0; i < _nume_Polymer; i++)
+	{
+		cellptr = _cellptr_list_Polymer[i];
+		cellptr->_mat_ptr->G_stress(sig);
+		output << i << " " << sig[0] << " " << sig[1] << " " << sig[2] << " " << sig[3] << " " << sig[4] << " " << sig[5] << endl;
+	}
 	return;
 }

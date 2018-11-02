@@ -5,10 +5,14 @@ using namespace std;
 int main()
 {
 	Tbody simulation;
-	ifstream input;
-	input.open("RegularGridTest_tensile.k");
-	simulation.input_body(input);
+	//Input grid
+	ifstream input_Polymer, input_CNT;
+	input_Polymer.open("RegularGridTest_tensile.k");
+	simulation.input_Polymer(input_Polymer);
+	input_CNT.open("horizon_bar_x_y_incliened_50.k");
+	simulation.input_CNT(input_CNT);
 	simulation.input_simulation_control();
+	//Simulation
 	simulation.calculate_nodal_inertance();
 	simulation.Output_Tecplot_mesh("Initial");
 	while (!simulation.is_finish())
@@ -27,6 +31,8 @@ int main()
 		//system("Pause");
 	}
 	simulation.Output_Tecplot_mesh("Final");
+	simulation.output_CNT_stress();
+	simulation.output_Polymer_stress();
 	double sig[6];
 	simulation.calculate_average_stress(sig);
 	cout << "sxx = " << sig[0] << " syy = " << sig[1] << " szz = " << sig[2] << endl;

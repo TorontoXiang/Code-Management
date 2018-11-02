@@ -143,7 +143,7 @@ void Tcell_brick::calculate_corner_force(double dt)
 }
 void Tcell_brick::calculate_hourglass_viscosity_force(vec3D(&HG_force)[8])
 {
-	double qh = 0.2;
+	double qh = 0.5;
 	double a = qh * _mat_ptr->G_density() / 4.0;
 	double v32 = pow(_volume, 2.0 / 3.0);
 	double ah = a * v32 * _mat_ptr->G_soundspeed();

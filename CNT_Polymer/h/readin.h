@@ -15,6 +15,12 @@ struct Scell_8
 	int IEN[8];
 	int part_id;
 };
+struct Scell_2
+{
+	int cell_id;
+	int IEN[2];
+	int part_id;
+};
 //Temporary structure for node
 struct Snode_temp
 {
@@ -50,6 +56,11 @@ struct Spart
 	int section_id;      //Section id
 	int material_id;     //Material id
 	int EOS_id;          //EOS id
+};
+struct Ssection
+{
+	int scetion_id;
+	double area;          //The area of the section
 };
 struct Smaterial
 {
@@ -105,6 +116,7 @@ struct Skeyword
 	Skeyword() { is_initial_vel = false; is_regular_grid = false; };
 	vector<Snode_temp> node_list;
 	vector<Scell_8> cell_8_list;
+	vector<Scell_2> cell_2_list;
 	vector<Sboundary_type> boundary_list;
 	vector<Snode_group> node_group_list;
 	vector<Scurve> curve_list;
@@ -112,6 +124,7 @@ struct Skeyword
 	vector<Spart> part_list;
 	vector<Smaterial> material_list;
 	vector<Sinitial_velocity_temp> initial_velocity_list;
+	vector<Ssection> section_list;
 
 	Stime time_control;
 	bool is_initial_vel;
