@@ -167,7 +167,7 @@ void Tgrid::calculate_cell_displacement(int cell_id,double(&d_cell)[8][3])
 	}
 	return;
 }
-void Tgrid::Output_Tecplot(string file_name)
+void Tgrid::Output_Tecplot(string file_name,int mid)
 {
 	//Calculate cell stress
 	Sstress** cell_stress;
@@ -179,9 +179,12 @@ void Tgrid::Output_Tecplot(string file_name)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			node_id = _cell_list[i]._node_ptr[j]->_id - 1;
-			node_stress[node_id].num = node_stress[node_id].num + 1;
-			node_stress[node_id].add(cell_stress[i][j]);
+			if (mid == -1 || mid == _cell_list[i]._mid)
+			{
+				node_id = _cell_list[i]._node_ptr[j]->_id - 1;
+				node_stress[node_id].num = node_stress[node_id].num + 1;
+				node_stress[node_id].add(cell_stress[i][j]);
+			}
 		}
 	}
 	for (int i = 0; i < _nump; i++)
@@ -215,11 +218,26 @@ void Tgrid::Output_Tecplot(string file_name)
 		}
 	}
 	//Output the Tecplot result
+	int nume_plot = 0;
+	if (mid==-1)
+	{
+		nume_plot = _nume;
+	}
+	else
+	{
+		for (int i = 0; i < _nume; i++)
+		{
+			if (_cell_list[i]._mid==mid)
+			{
+				nume_plot = nume_plot + 1;
+			}
+		}
+	}
 	ofstream output;
 	output.open(file_name);
 	output << "TITLE = \"Tecplot Grid\"" << endl;
 	output << "VARIABLES = \"X\",\"Y\",\"Z\",\"SXX\",\"SYY\",\"SZZ\",\"SXY\",\"SXZ\",\"SYZ\",\"EQS\"" << endl;
-	output << "ZONE F=FEPOINT,N=" << _nump << "," << "E=" << _nume << "," << "ET=BRICK" << endl;
+	output << "ZONE F=FEPOINT,N=" << _nump << "," << "E=" << nume_plot << "," << "ET=BRICK" << endl;
 	for (int i = 0; i < _nump; i++)
 	{
 		output << pos[i][0] << " " << pos[i][1] << " " << pos[i][2] << " ";
@@ -229,9 +247,12 @@ void Tgrid::Output_Tecplot(string file_name)
 	}
 	for (int i = 0; i < _nume; i++)
 	{
-		for (int j = 0; j < 8; j++)
+		if (mid==-1 || mid==_cell_list[i]._mid)
 		{
-			output << _cell_list[i]._node_ptr[j]->_id << " ";
+			for (int j = 0; j < 8; j++)
+			{
+				output << _cell_list[i]._node_ptr[j]->_id << " ";
+			}
 		}
 		output << endl;
 	}
@@ -408,21 +429,32 @@ void Tgrid_CNT::Input_CNT(Skeyword& keyword)
 		_mat_list[i]._E = keyword.material_list[i].Youngs;
 		_mat_list[i]._mu = keyword.material_list[i].Possion;
 	}
-	detect_boundary_nodes();
+	//detect_boundary_nodes();
+	//detect_boundary_cells();
+	for (int i = 0; i < _nump; i++)
+	{
+		double x = _node_list[i]._pos[0];
+		double y = _node_list[i]._pos[1];
+		double z = _node_list[i]._pos[2];
+		if (abs(x)<1e-10)
+		{
+			_node_list[i]._bc[0] = 1;
+		}
+		if (abs(y) < 1e-10)
+		{
+			_node_list[i]._bc[1] = 1;
+		}
+		if (abs(z) < 1e-10)
+		{
+			_node_list[i]._bc[2] = 1;
+		}
+		if (abs(z-35)<1e-10)
+		{
+			_node_list[i]._bc[2] = 1;
+			_node_list[i]._bc_value[2] = 1.75;
+		}
+	}
 	detect_boundary_cells();
-	//for (int i = 0; i < _nump; i++)
-	//{
-	//	double z = _node_list[i]._pos[2];
-	//	if (abs(z)<1e-10)
-	//	{
-	//		_node_list[i]._bc[0] = _node_list[i]._bc[1] = _node_list[i]._bc[2] = 1;
-	//	}
-	//	if (abs(z-1)<1e-10)
-	//	{
-	//		_node_list[i]._bc[2] = 1;
-	//		_node_list[i]._bc_value[2] = 0.1;
-	//	}
-	//}
 	return;
 }
 void Tgrid_CNT::detect_boundary_nodes()

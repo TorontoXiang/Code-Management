@@ -16,7 +16,7 @@ public:
 	//Create the MKL solver and do the numerical factorization
 	Sstress** Calculate_cell_stress();
 	//Calcaulte the stress at the 8 Gauss points of each cell
-	void Output_Tecplot(string file_name);
+	void Output_Tecplot(string file_name,int mid=-1);
 	//Calculate the stress and output;
 	void calculate_reacting_force();
 	//Calculate the reacting force of each constraint

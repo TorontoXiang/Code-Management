@@ -8,8 +8,20 @@ void fixed_point_iteration();
 void CG_iteration();
 int main()
 {
+	Skeyword keyword;
+	ifstream input;
+	input.open("benchmark.k");
+	read_in_keyword_file(input, keyword);
+	Tgrid_CNT grid_CNT;
+	grid_CNT.Input_CNT(keyword);
+	grid_CNT.Create_MKL_solver();
+	system("Pause");
+	grid_CNT.calculate_load_from_constraint();
+	grid_CNT.Solving_equilibrium_equation();
+	grid_CNT.Output_Tecplot("benchmark_CNT.dat",1);
+	grid_CNT.Output_Tecplot("benchmark_Polymer.dat", 0);
 	//fixed_point_iteration();
-	CG_iteration();
+	//CG_iteration();
 	return 0;
 }
 void CG_iteration()

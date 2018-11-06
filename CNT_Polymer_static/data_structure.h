@@ -40,8 +40,11 @@ struct Snode_stress
 
 	void Average() 
 	{
-		sxx = sxx / num; syy = syy / num; szz = szz / num; 
-		sxy = sxy / num; sxz = sxz / num; syz = syz / num;
+		if (num>0)
+		{
+			sxx = sxx / num; syy = syy / num; szz = szz / num; 
+			sxy = sxy / num; sxz = sxz / num; syz = syz / num;
+		}
 	};
 	void add(Sstress const &other)
 	{
