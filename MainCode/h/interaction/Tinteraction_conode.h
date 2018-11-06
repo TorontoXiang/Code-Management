@@ -70,7 +70,7 @@ void Tinteraction_conode<T1,T2>::create_conode_list()
 	vec3D coor_min,coor_max;
 	double cell_edge_max,cell_edge_min;
 	_body1->calculate_body_size(coor_min,coor_max,cell_edge_max,cell_edge_min);
-	Tbucket_searching bucket(coor_min,coor_max,cell_edge_min);
+	Tbucket_searching bucket(coor_min,coor_max,cell_edge_max);
 	//Put the node in body1 into the bucket
 	int ix,iy,iz;
 	bool access;

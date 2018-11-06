@@ -814,7 +814,13 @@ void Tgrid_Polymer::calculate_load_from_CNT(Tgrid_CNT* grid_CNT,int phase)
 }
 void Tgrid_Polymer::Create_MKL_solver()
 {
-	Tgrid::Create_MKL_solver();
+	//Tgrid::Create_MKL_solver();
+	calculate_ID();
+	calculate_iK_jK();
+	assemble_equations();
+	MKL_solver.S_freedom_degree(_num_freedom_degree);
+	MKL_solver.S_matrix(_iK, _jK, _K);
+	//MKL_solver.Numerical_factorization();
 	_load_total = new double[_num_freedom_degree];
 	_r = new double[_num_freedom_degree];
 	_p = new double[_num_freedom_degree];
@@ -874,11 +880,11 @@ void Tgrid_Polymer::Calculate_b()
 	//{
 	//	cout << i<<" "<<_load_constraint[i] << endl;
 	//}
-	cout << "CNT" << endl;
-	for (int i = 0; i < _num_freedom_degree; i++)
-	{
-		cout << i << " " << _F0[i] << endl;
-	}
+	//cout << "CNT" << endl;
+	//for (int i = 0; i < _num_freedom_degree; i++)
+	//{
+	//	cout << i << " " << _F0[i] << endl;
+	//}
 	return;
 }
 void Tgrid_Polymer::Calculate_Kp()

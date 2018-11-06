@@ -93,6 +93,7 @@ void Tcell_brick::calculate_corner_force(Tviscosity_base* Arti_Vis, double dt)
 	vec3D DN[8];                                   //The derivatives of shape function with respected to x,y,z
 	double det;
 	calculate_DN_matrix(DN, det);
+	double volume_pre = _volume;
 	_volume = 8.0*det;
 	//Calculate the gradient of the velocity
 	double dij[3][3];
@@ -113,7 +114,7 @@ void Tcell_brick::calculate_corner_force(Tviscosity_base* Arti_Vis, double dt)
 	vort[1] = 0.5*(dij[0][2] - dij[2][0]);
 	vort[2] = 0.5*(dij[0][1] - dij[1][0]);
 	//Update the stress
-	_gausspoint[0]->update_state(de, vort, dt);
+	_gausspoint[0]->update_state(de, vort, dt, volume_pre);
 	//Calcualte the artificial viscosity and modify the soundspeed
 	double vrate = de[0] + de[1] + de[2];
 	//double q = Arti_Vis->calculate_q(_gausspoint[0]->G_density(), vrate, _gausspoint[0]->G_soundspeed(), _clength);

@@ -19,7 +19,7 @@ void Tgrid_smooth_continum::generate_new_grid()
 	double* dis;
 	dis=new double[_num_freedom_degree];
 	set_initial_and_final_position();
-	int num_move=5;
+	int num_move=1;
 	for (int i = 0; i < num_move; i++)
 	{
 		calculate_current_position_at_conode(i,num_move);

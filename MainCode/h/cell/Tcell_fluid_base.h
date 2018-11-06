@@ -58,6 +58,7 @@ public:
 	//Update the material state at corrector step
 	virtual void reset_state_after_remapping(){};
 	//Reset the cell state after remapping phase
+	virtual void reset_state_after_overlapping_exp(){}
 	virtual void calculate_average_variable(double  &av_density,double &av_pressure,double &av_soundspeed){};
 	//Calculate the average density,pressure and soundspeed
 	virtual void assemble_corner_inertance(){};

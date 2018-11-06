@@ -8,6 +8,7 @@ Tcell_pure_fluid::Tcell_pure_fluid(int cell_id,Tnode_fluid* (&node_ptr)[8],TMAT_
 		_material_mass=_gausspoint[0]->G_density()*_cell_volume;
 	}
 	_material_internal_energy=0;
+	_flag = 0;
 }
 void Tcell_pure_fluid::reset_conservative_variable_initial_condition()
 {

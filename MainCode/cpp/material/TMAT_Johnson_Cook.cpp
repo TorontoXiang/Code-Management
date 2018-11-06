@@ -1,4 +1,6 @@
 #include "TMAT_Johnson_Cook.h"
+#include <iostream>
+using namespace std;
 TMAT_Johnson_Cook::TMAT_Johnson_Cook(double density,double Young,double Possion,double A,double B,double C,double n,double epso,TEOS_base* EOS):TMATIsotropic_elastic(density,Young,Possion)
 {
 	_A=A;_B=B;_C=C;_n=n;_epso=epso;

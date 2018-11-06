@@ -24,11 +24,21 @@ struct Scell_8
 	int IEN[8];
 	int part_id;
 };
+//Brick cell with variable information
+struct Scell_8_with_variable : public Scell_8
+{
+	double density, internal_energy;
+};
 //Temporary structure for node
 struct Snode_temp
 {
 	int id;            //The node id
 	double x,y,z;      //The node coordinate
+};
+//Node with velocity information
+struct Snode_with_vel : Snode_temp
+{
+	double vx, vy, vz;
 };
 //Temproary structure for particle
 struct Sparticle_temp
@@ -192,9 +202,11 @@ struct Skeyword
 {
 	Skeyword() { num_particle_part = 0; is_implosion = false; hourglass_option = true; is_initial_vel = false; };
 	vector<Snode_temp> node_list;
+	vector<Snode_with_vel> vel_node_list;
 	vector<Sparticle_temp> particle_list;
 	vector<Scell_4> cell_4_list;
 	vector<Scell_8> cell_8_list;
+	vector<Scell_8_with_variable> variable_cell_8_list;
 	vector<Sboundary_type> boundary_list;
 	vector<Snode_group> node_group_list;
 

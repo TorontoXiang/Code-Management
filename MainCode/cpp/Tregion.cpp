@@ -154,6 +154,9 @@ void Tregion::time_integration()
 	{
 		_body_list[i]->output_mesh("Final");
 	}
+	ofstream output;
+	output.open("distribution.dat");
+	_body_list[0]->output_distribution(output);
 	return;
 }
 //-------------------------------------------------------------------------------
@@ -320,7 +323,6 @@ bool Tregion::input_region()
 			}
 			input.close();
 		}
-	//system("Pause");
 	}
 
 	//Set the endtime for the region
@@ -477,7 +479,7 @@ void Tregion::input_extra_info()
 				{
 					_interaction_list[interaction_id]=interaction_ptr;
 				}
-				num_exist_interaction=num_exist_interaction+1;
+				num_exist_interaction=num_exist_interaction+1;	
 			}
 			_num_interaction=_interaction_list.size();
 			if (_num_body>1 && _num_interaction==0)

@@ -13,7 +13,7 @@ public:
 	double calculate_Lambda();      //Calculate Lambda
 	double calculate_G();           //Calculate G
 	double calculate_K();           //Calculate K
-	double calculate_equivalent_stress();   //calculate equivalent stress
+	virtual double calculate_equivalent_stress();   //calculate equivalent stress
 
 	//Initialize the material state
 	virtual double calculate_sound_speed();

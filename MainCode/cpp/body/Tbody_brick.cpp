@@ -198,13 +198,34 @@ double Tbody_brick::calculate_maximal_effective_plastic_strain()
 void Tbody_brick::output_tecplot(ofstream& output, double ratio)
 {
 	output << "TITLE = \"Mesh for Shell Element\"" << endl;
-	output << "VARIABLES = \"X\",\"Y\",\"Z\"" << endl;
+	output << "VARIABLES = \"X\",\"Y\",\"Z\",\"EQS\"" << endl;
 	output << "ZONE T= \"Time="<<_current_time<<"\", F=FEPOINT,N=" << _nump << "," << "E=" << _nume << "," << "ET=BRICK" << endl;
 	vec3D dis;
+	Snode_stress *node_stress;
+	node_stress = new Snode_stress[_nump];
+	for (int i = 0; i < _nump; i++)
+	{
+		node_stress[i].volume = node_stress[i].eqs = 0;
+	}
+	for (int i = 0; i < _nume; i++)
+	{
+		double volume = _cellptr_list[i]->_volume*0.125;
+		double eqs = _cellptr_list[i]->_gausspoint[0]->calculate_equivalent_stress();
+		for (int j = 0; j < 8; j++)
+		{
+			int node_id = _cellptr_list[i]->_node_ptr[j]->_id - 1;
+			node_stress[node_id].eqs = node_stress[node_id].eqs + eqs * volume;
+			node_stress[node_id].volume = node_stress[node_id].volume + volume;
+		}
+	}
+	for (int i = 0; i < _nump; i++)
+	{
+		node_stress[i].eqs = node_stress[i].eqs / node_stress[i].volume;
+	}
 	for (int i = 0; i < _nump; i++)
 	{
 		dis = _nodeptr_list[i]->calculate_displacement_amplify(ratio);
-		output << dis.x << " " << dis.y << " " << dis.z << endl;
+		output << dis.x << " " << dis.y << " " << dis.z << " " << node_stress[i].eqs << endl;
 	}
 	for (int i = 0; i < _nume; i++)
 	{
@@ -251,7 +272,7 @@ void Tbody_brick::input_body(ifstream& input)
 	_grid._cell_list.resize(_nume);
 	_cellptr_list.resize(_nume);
 	int nGauss=1;
-	int part_id, material_id;
+	int part_id, material_id, EOS_id;
 	Tnode* node_ptr[8];
 	for (int i = 0; i < _nume; i++)
 	{
@@ -265,13 +286,18 @@ void Tbody_brick::input_body(ifstream& input)
 		//Read cell's material properties
 		part_id = keyword.cell_8_list[i].part_id;
 		material_id = keyword.part_list[part_id - 1].material_id;
+		EOS_id = keyword.part_list[part_id - 1].EOS_id;
 		Smaterial this_mat = keyword.material_list[material_id - 1];
-		SEOS temp;    //Useless
+		SEOS this_EOS;
+		if (EOS_id!=0)
+		{
+			this_EOS = keyword.EOS_list[EOS_id - 1];
+		}
 		TMAT_base** mat;
 		mat = new TMAT_base*[nGauss];
 		for (int k = 0; k < nGauss; k++)
 		{
-			mat[k] = generate_material(this_mat, temp, 0);
+			mat[k] = generate_material(this_mat, this_EOS, 0);
 		}
 		//Create a new cell
 		Tcell_brick new_cell(id, nGauss, node_ptr, mat);

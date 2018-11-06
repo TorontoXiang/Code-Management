@@ -50,6 +50,7 @@ public:
 	virtual double G_epeff(){return 0;};
 	virtual void G_stress(double (&stress)[6]){};
 	virtual double G_seqv(){return 0;};
+	virtual double calculate_equivalent_stress() { return 0; };
 
 	//Value functions
 	void S_soundspeed(double soundspeed){_soundspeed=soundspeed;};

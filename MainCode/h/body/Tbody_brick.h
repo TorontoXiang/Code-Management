@@ -10,6 +10,11 @@
 using namespace std;
 class Tbody_brick : public Tbody_base
 {
+	struct Snode_stress
+	{
+		double volume;
+		double eqs;
+	};
 public:
 	Tbody_brick(int i, string body_name) : Tbody_base(i, body_name) {}
 

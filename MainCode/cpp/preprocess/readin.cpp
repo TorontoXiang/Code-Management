@@ -295,6 +295,16 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 				keyword.node_list.push_back(new_node);
 			}
 		}
+		else if (a=="*NODE_WITH_VEL")
+		{
+			while (!exam_keyword(input))
+			{
+				Snode_with_vel new_node;
+				input >> new_node.id >> new_node.x >> new_node.y >> new_node.z;
+				input >> new_node.vx >> new_node.vy >> new_node.vz;
+				keyword.node_list.push_back(new_node);
+			}
+		}
 		else if (a=="*MPM_PARTICLE")
 		{
 			next_data(input);
@@ -635,6 +645,15 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 				input>>new_shell.IEN[4]>>new_shell.IEN[5]>>new_shell.IEN[6]>>new_shell.IEN[7];
 				keyword.cell_8_list.push_back(new_shell);
 			}
+		}
+		else if (a == "*ELEMENT_SOLID_WITH_VARIABLE")
+		{
+			Scell_8_with_variable new_cell;
+			input >> new_cell.cell_id >> new_cell.part_id;
+			input >> new_cell.IEN[0] >> new_cell.IEN[1] >> new_cell.IEN[2] >> new_cell.IEN[3];
+			input >> new_cell.IEN[4] >> new_cell.IEN[5] >> new_cell.IEN[6] >> new_cell.IEN[7];
+			input >> new_cell.density >> new_cell.internal_energy;
+			keyword.cell_8_list.push_back(new_cell);
 		}
 		else if (a=="*ELEMENT_SOLID_TET")
 		{

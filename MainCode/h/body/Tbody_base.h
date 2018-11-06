@@ -53,6 +53,8 @@ public:
 	//Overlapping the ALE grid with the immersed material mid grid
 	virtual void standard_test_initial_conditions(){};
 	//Set the specific initial conditions for standard test
+	virtual void output_k_file() {};
+	//Output the k file of the explosion region
 //-----------------------------------------------------------------
 //Non-virtual functions
 //-----------------------------------------------------------------

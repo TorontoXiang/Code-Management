@@ -435,6 +435,29 @@ void Tcell_mixed_fluid::reset_state_after_remapping()
 	calculate_corner_mass();
 	return;
 }
+void Tcell_mixed_fluid::reset_state_after_overlapping_exp()
+{
+	int num_material = _gausspoint.size();
+	//Update the volume fraction first
+	for (int i = 0; i < num_material; i++)
+	{
+		_material_fraction[i] = _material_fraction[i] / _cell_volume;
+	}
+	//Filter the fraction
+	filter_fraction();
+	//Update physical variables
+	for (int i = 0; i < num_material; i++)
+	{
+		if (_material_fraction[i] > 0)
+		{
+			bool failed;
+			_gausspoint[i]->update_state(_material_mass[i], _cell_volume*_material_fraction[i], _material_internal_energy[i], failed);
+			_material_centroid[i] = _material_centroid[i] / (_cell_volume*_material_fraction[i]);
+			_material_centroid_std[i] = calculate_std_coordinate(_material_centroid[i]);
+		}
+	}
+	return;
+}
 void Tcell_mixed_fluid::calculate_average_variable(double  &av_density,double &av_pressure,double &av_soundspeed)
 {
 	int num_material=_gausspoint.size();

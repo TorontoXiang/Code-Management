@@ -3,7 +3,7 @@ void Tcomposite::Input()
 {
 	Skeyword keyword;
 	ifstream input;
-	input.open("single_cell_move.k");
+	input.open("sample_CNT.k");
 	read_in_keyword_file(input, keyword);
 	_grid_CNT.Input_CNT(keyword);
 	_grid_CNT.Create_MKL_solver();
@@ -11,6 +11,7 @@ void Tcomposite::Input()
 	_grid_Polymer.Create_MKL_solver();
 	_grid_Polymer.calculate_load_from_constraint();
 	_grid_CNT.calculate_CNT_location(&_grid_Polymer);
+	system("Pause");
 }
 void Tcomposite::Calculate_F0_b()
 {
@@ -44,7 +45,7 @@ void Tcomposite::Calculate_Fd()
 void Tcomposite::CG_iteration()
 {
 	Calculate_F0_b();
-	_grid_Polymer.Solving_equilibrium_equation();
+	//_grid_Polymer.Solving_equilibrium_equation();
 	_grid_Polymer.CG_initialize_p();
 	_grid_Polymer.Calculate_Kp();
 	Calculate_Fp();

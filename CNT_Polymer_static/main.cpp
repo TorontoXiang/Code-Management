@@ -8,8 +8,8 @@ void fixed_point_iteration();
 void CG_iteration();
 int main()
 {
-	fixed_point_iteration();
-	//CG_iteration();
+	//fixed_point_iteration();
+	CG_iteration();
 	return 0;
 }
 void CG_iteration()
