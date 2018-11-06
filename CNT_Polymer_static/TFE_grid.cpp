@@ -28,12 +28,14 @@ void Tgrid::calculate_ID()
 			}
 		}
 	}
-	_load_constraint = new double[_num_freedom_degree];
+	_p = new double[_num_freedom_degree];
+	//_load_constraint = new double[_num_freedom_degree];
 	_dis = new double[_num_freedom_degree];
 	_reacting_force = new double[_num_fixed];
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
-		_load_constraint[i] = _dis[i] = 0;
+		//_load_constraint[i] = _dis[i] = 0;
+		_p[i] = _dis[i] = 0;
 	}
 	for (int i = 0; i < _num_fixed; i++)
 	{
@@ -106,7 +108,7 @@ void Tgrid::calculate_iK_jK()
 	_K = new double[_num_non_zero];
 	return;
 }
-void Tgrid::Create_MKL_solver()
+void Tgrid_CNT::Create_MKL_solver()
 {
 	calculate_ID();
 	calculate_iK_jK();
@@ -118,15 +120,7 @@ void Tgrid::Create_MKL_solver()
 }
 void Tgrid_CNT::Solving_equilibrium_equation()
 {
-	MKL_solver.Solving(_load_constraint, _dis);
-}
-void Tgrid_Polymer::Solving_equilibrium_equation()
-{
-	for (size_t i = 0; i < _num_freedom_degree; i++)
-	{
-		_load_total[i] = _load_total[i] + _load_constraint[i];
-	}
-	MKL_solver.Solving(_load_total, _dis);
+	MKL_solver.Solving(_p, _dis);
 }
 Sstress** Tgrid::Calculate_cell_stress()
 {
@@ -334,15 +328,6 @@ void Tgrid_Polymer::Input_Polymer()
 	_mat_list[0]._E = keyword.material_list[0].Youngs;
 	_mat_list[0]._mu = keyword.material_list[0].Possion;
 	detect_boundary_cells();
-	int sum = 0;
-	for (int i = 0; i < _nume; i++)
-	{
-		if (_cell_list[i]._is_boundary)
-		{
-			sum = sum + 1;
-		}
-	}
-	cout << sum << endl;
 	return;
 }
 void Tgrid_Polymer::apply_regular_bc(Sregular_grid_bc& bc)
@@ -429,31 +414,7 @@ void Tgrid_CNT::Input_CNT(Skeyword& keyword)
 		_mat_list[i]._E = keyword.material_list[i].Youngs;
 		_mat_list[i]._mu = keyword.material_list[i].Possion;
 	}
-	//detect_boundary_nodes();
-	//detect_boundary_cells();
-	for (int i = 0; i < _nump; i++)
-	{
-		double x = _node_list[i]._pos[0];
-		double y = _node_list[i]._pos[1];
-		double z = _node_list[i]._pos[2];
-		if (abs(x)<1e-10)
-		{
-			_node_list[i]._bc[0] = 1;
-		}
-		if (abs(y) < 1e-10)
-		{
-			_node_list[i]._bc[1] = 1;
-		}
-		if (abs(z) < 1e-10)
-		{
-			_node_list[i]._bc[2] = 1;
-		}
-		if (abs(z-35)<1e-10)
-		{
-			_node_list[i]._bc[2] = 1;
-			_node_list[i]._bc_value[2] = 1.75;
-		}
-	}
+	detect_boundary_nodes();
 	detect_boundary_cells();
 	return;
 }
@@ -700,7 +661,8 @@ void Tgrid::calculate_load_from_constraint()
 	double Ke[24][24], load_e[24];
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
-		_load_constraint[i] = 0;
+		//_load_constraint[i] = 0;
+		_p[i] = 0;
 	}
 	for (int n = 0; n < _nume; n++)
 	{
@@ -737,7 +699,7 @@ void Tgrid::calculate_load_from_constraint()
 						int freedom_j = LM[j];
 						if (freedom_j > 0)
 						{
-							_load_constraint[freedom_j - 1] = _load_constraint[freedom_j - 1] - load_e[j];
+							_p[freedom_j - 1] = _p[freedom_j - 1] - load_e[j];
 						}
 					}
 				}
@@ -786,7 +748,7 @@ void Tgrid_CNT::calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer)
 		}
 	}
 }
-void Tgrid_Polymer::calculate_load_from_CNT(Tgrid_CNT* grid_CNT,int phase)
+void Tgrid_Polymer::assemble_Fp(Tgrid_CNT* grid_CNT)
 {
 	int nump_CNT = grid_CNT->_nump;
 	for (int i = 0; i < nump_CNT; i++)
@@ -812,149 +774,63 @@ void Tgrid_Polymer::calculate_load_from_CNT(Tgrid_CNT* grid_CNT,int phase)
 					int freedom_id = _ID[3 * node_id + k];
 					if (freedom_id>0)
 					{
-						if (phase==0)
-						{
-							_load_total[freedom_id - 1] = _load_total[freedom_id - 1] - Nj * force_P2C[k];
-						}
-						else if (phase==1)
-						{
-							_F0[freedom_id - 1] = _F0[freedom_id - 1] - Nj * force_P2C[k];
-						}
-						else if (phase==2)
-						{
-							_Fp[freedom_id - 1] = _Fp[freedom_id - 1] - Nj * force_P2C[k];
-						}
-						else if (phase==3)
-						{
-							_Fd[freedom_id - 1] = _Fd[freedom_id - 1] - Nj * force_P2C[k];
-						}
+						_Fp[freedom_id - 1] = _Fp[freedom_id - 1] - Nj * force_P2C[k];
 					}
 				}
-
 			}
 		}
 	}
-	//if (phase==2)
-	//{
-	//	cout << "Fp" << endl;
-	//	for (int i = 0; i < _num_freedom_degree; i++)
-	//	{
-	//		cout << i << " " << _Fp[i] << endl;
-	//	}
-	//}
 	return;
 }
-void Tgrid_Polymer::Create_MKL_solver()
+void Tgrid_Polymer::Calculate_stiffness_matrix()
 {
-	//Tgrid::Create_MKL_solver();
 	calculate_ID();
 	calculate_iK_jK();
 	assemble_equations();
-	MKL_solver.S_freedom_degree(_num_freedom_degree);
-	MKL_solver.S_matrix(_iK, _jK, _K);
-	//MKL_solver.Numerical_factorization();
-	_load_total = new double[_num_freedom_degree];
 	_r = new double[_num_freedom_degree];
-	_p = new double[_num_freedom_degree];
-	_Ap = new double[_num_freedom_degree];
 	_Fp = new double[_num_freedom_degree];
 	_F0 = new double[_num_freedom_degree];
-	_b = new double[_num_freedom_degree];
 	_Kp = new double[_num_freedom_degree];
-	_Kd = new double[_num_freedom_degree];
-	_Fd = new double[_num_freedom_degree];
-	_Ad = new double[_num_freedom_degree];
-	_rd = new double[_num_freedom_degree];
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
-		_load_total[i] = _r[i] = _p[i] = _Ap[i] = _Fp[i] = _F0[i] = _b[i] = _Kp[i] = _Kd[i] = _Fd[i] = _Ad[i] = _rd[i] = 0;
+		_r[i] = _Fp[i] = _F0[i] = _Kp[i] = 0;
 	}
 	return;
 }
-void Tgrid_Polymer::initialize_load_total(int phase)
+void Tgrid_Polymer::initialize_Fp()
 {
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
-		if (phase==0)
-		{
-			_load_total[i] = 0;
-		}
-		else if (phase==1)
-		{
-			_F0[i] = 0;
-		}
-		else if (phase==2)
-		{
-			_Fp[i] = 0;
-		}
-		else if (phase==3)
-		{
-			_Fd[i] = 0;
-		}
+		_Fp[i] = 0;
 	}
 }
-void Tgrid_Polymer::output_dis(ofstream& output)
+void Tgrid_Polymer::Set_F0()
 {
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
-		output << _dis[i] << " ";
+		_F0[i] = _Fp[i];
 	}
-	output << endl;
-}
-void Tgrid_Polymer::Calculate_b()
-{
-	for (int i = 0; i < _num_freedom_degree; i++)
-	{
-		_b[i] = _load_constraint[i] + _F0[i];
-	}
-	//cout << "BC" << endl;
-	//for (int i = 0; i < _num_freedom_degree; i++)
-	//{
-	//	cout << i<<" "<<_load_constraint[i] << endl;
-	//}
-	//cout << "CNT" << endl;
-	//for (int i = 0; i < _num_freedom_degree; i++)
-	//{
-	//	cout << i << " " << _F0[i] << endl;
-	//}
-	return;
 }
 void Tgrid_Polymer::Calculate_Kp()
 {
 	char uplo = 'u';
 	mkl_dcsrsymv(&uplo, &_num_freedom_degree, _K, _iK, _jK, _p, _Kp);
-	return;
-}
-void Tgrid_Polymer::Calculate_Kd()
-{
-	char uplo = 'u';
-	mkl_dcsrsymv(&uplo, &_num_freedom_degree, _K, _iK, _jK, _dis, _Kd);
-	return;
-}
-void Tgrid_Polymer::Calculate_Ap()
-{
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
-		_Ap[i] = _Kp[i] - (_Fp[i] - _F0[i]);
+		_Kp[i] = _Kp[i] - (_Fp[i] - _F0[i]);
 	}
-}
-void Tgrid_Polymer::Calculate_Ad()
-{
-	for (int i = 0; i < _num_freedom_degree; i++)
-	{
-		_Ad[i] = _Kd[i] - (_Fd[i] - _F0[i]);
-	}
+	return;
 }
 void Tgrid_Polymer::CG_update()
 {
-	double rr, pAp;
+	double rr, pKp;
 	rr = cblas_ddot(_num_freedom_degree, _r, 1, _r, 1);
-	pAp = cblas_ddot(_num_freedom_degree, _p, 1, _Ap, 1);
-	double alpha = rr / pAp;
+	pKp = cblas_ddot(_num_freedom_degree, _p, 1, _Kp, 1);
+	double alpha = rr / pKp;
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
 		_dis[i] = _dis[i] + alpha * _p[i];
-		_r[i] = _r[i] - alpha * _Ap[i];
+		_r[i] = _r[i] - alpha * _Kp[i];
 	}
 	double rr1= cblas_ddot(_num_freedom_degree, _r, 1, _r, 1);
 	double b = rr1 / rr;
@@ -1007,30 +883,15 @@ void Tgrid_Polymer::calculate_cell_p(int cell_id, double(&p_cell)[8][3])
 	}
 	return;
 }
-void Tgrid_Polymer::CG_initialize_p()
-{
-	for (size_t i = 0; i < _num_freedom_degree; i++)
-	{
-		_p[i] = _dis[i];
-	}
-	return;
-}
-void Tgrid_Polymer::CG_initialize_r()
-{
-	Calculate_Ap();
-	for (int i = 0; i < _num_freedom_degree; i++)
-	{
-		_r[i] = _b[i] - _Ap[i];
-		_p[i] = _r[i];
-	}
-	//cout << "_r" << endl;
-	//for (int i = 0; i < _num_freedom_degree; i++)
-	//{
-	//	cout << _r[i] << endl;
-	//}
-	return;
-}
 double Tgrid_Polymer::calculate_diff()
 {
 	return abs(_r[cblas_idamax(_num_freedom_degree, _r, 1)]);
+}
+void Tgrid_Polymer::CG_initialization()
+{
+	for (int i = 0; i < _num_freedom_degree; i++)
+	{
+		_r[i] = _p[i]+_F0[i];
+		_p[i] = _r[i];
+	}
 }

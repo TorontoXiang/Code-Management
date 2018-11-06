@@ -54,9 +54,9 @@ void TMKL_solver::Numerical_factorization()
 		system("Pause");
 		exit(1);
 	}
-	printf("\nReordering completed ... ");
-	printf("\nNumber of nonzeros in factors = %d", iparm[17]);
-	printf("\nNumber of factorization MFLOPS = %d", iparm[18]);
+	//printf("\nReordering completed ... ");
+	//printf("\nNumber of nonzeros in factors = %d", iparm[17]);
+	//printf("\nNumber of factorization MFLOPS = %d", iparm[18]);
 	//--------------------------------------------------------------------
 	// Numerical factorization
 	//--------------------------------------------------------------------
@@ -68,7 +68,7 @@ void TMKL_solver::Numerical_factorization()
 		system("Pause");
 		exit(2);
 	}
-	printf("\nFactorization completed ... ");
+	//printf("\nFactorization completed ... ");
 	return;
 }
 void TMKL_solver::Solving(double* b, double* dis)

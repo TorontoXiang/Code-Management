@@ -90,7 +90,6 @@ void read_in_keyword_file(ifstream& input,Skeyword& keyword)
 	{
 		next_keyword(input);
 		input>>a;
-		cout<<a<<endl;
 		if (a=="*NODE")
 		{
 			while (!exam_keyword(input))

@@ -12,8 +12,6 @@ using namespace std;
 class Tgrid
 {
 public:
-	void Create_MKL_solver();
-	//Create the MKL solver and do the numerical factorization
 	Sstress** Calculate_cell_stress();
 	//Calcaulte the stress at the 8 Gauss points of each cell
 	void Output_Tecplot(string file_name,int mid=-1);
@@ -36,11 +34,13 @@ protected:
 											//<0:  The displacement on this freedom degree is fixed
 	int* _iK;
 	int* _jK;
-	double* _K;                             //Sparse stiffness matrix                       
-	double* _load_constraint;               //The right hand side of from the displacement constraint
+	double* _K;                             //Sparse stiffness matrix         
+	double* _p;	                            //_p can be used as:
+											//1. The p in CG iteration in Tgrid_Polymer
+											//2. The RHS of the equilibrium equation in Tgrid_CNT
+											//3. Temporary store the RHS from boundary condition in Tgrid_Polymer when initilizing the CG iteration                             
 	double* _reacting_force;                //The reacting force from the boundary condition
 	double* _dis;                           //The displacement at each freedom of degree
-	TMKL_solver MKL_solver;                 //The MKL solver for this grid
 
 
 
@@ -62,78 +62,40 @@ class Tgrid_Polymer : public Tgrid
 {
 public:
 	Tgrid_Polymer() {};
-	void Create_MKL_solver();
-	//Tgrid::Create_MKL_solver + allocate the memory for _load_total
+	void Calculate_stiffness_matrix();
+	//Only calculate the sparse stiffness matrix but does not perform the numerical factorization
+	//Allocate the memory for the variables in CG iteration
 	void Input_Polymer();
 	//Input the regular polymer grid
 	vec3D calculate_external_load(string face_name);
 	//Calculate the total external load on the polymer boundary
-	void Solving_equilibrium_equation();
-	//Solving the equilibrium equation (The RHS is the sum of load from constraint and the CNT)
-	void calculate_load_from_CNT(Tgrid_CNT* grid_CNT,int phase);
-	//Calculate the force from a CNT grid
-	//phase=0:load equals to _load
-	//phase=1:load equals to _F0
-	//phase=2:load equals to _Fp
+	void assemble_Fp(Tgrid_CNT* grid_CNT);
+	//Assemble the Fp from a CNT grid
 	void calculate_cell_p(int cell_id, double(&p_cell)[8][3]);
 	//Calculate cell p in CG iteration
-	void initialize_load_total(int phase);
-	//Set _load_total to 0
-	void Calculate_b();
-	//Calculate _b vector
+	void initialize_Fp();
+	//Set _Fp to 0
+	void Set_F0();
+	//Set _F0=_Fp in the initialization of CG iteration
 	void Calculate_Kp();
 	//Calculate Kp
-	void Calculate_Kd();
-
-	void Calculate_Ap();
-	//Calculate (K+T)p
-
-	void Calculate_Ad();
-
-	void CG_initialize_p();
-	void CG_initialize_r();
+	void CG_initialization();
 	//Initialization the CG iteration
 	void CG_update();
 	//Update the variables in CG iteration
 	double calculate_diff();
 	//Return the maximal value of _r
-	void output_dis(ofstream& output);
 
-	void output_p()
-	{
-		for (int i = 0; i < _num_freedom_degree; i++)
-		{
-			cout << i << " " << _p[i] << endl;
-		};
-	}
-	void calculate_rd()
-	{
-		for (int i = 0; i < _num_freedom_degree; i++)
-		{
-			_rd[i] = _b[i] - _Ad[i];
-			cout << i << " " << _r[i] << " " << _rd[i] << endl;
-		};
-	}
 protected:
 	double _x_min[3], _x_max[3];
 	double _interval[3];
 	int _nx, _ny, _nz;
 
-	double* _load_total;                //Load from constriant and the CNT
-
 	//Variables for CG iteration
 	double* _r;
-	double* _p;
 	double* _Kp;
 	double* _Fp;
 	double* _F0;
-	double* _b;
-	double* _Ap;
-
-	double* _Kd;
-	double* _Fd;
-	double* _Ad;
-	double* _rd;
 
 	void apply_regular_bc(Sregular_grid_bc& bc);
 
@@ -143,6 +105,8 @@ class Tgrid_CNT : public Tgrid
 {
 public:
 	Tgrid_CNT() {};
+	void Create_MKL_solver();
+	//Create the MKL solver and do the numerical factorization
 	void Input_CNT(Skeyword& keyword);
 	//Generate this CNT from keyword
 	void calculate_CNT_location(Tgrid_Polymer* grid_polymer);
@@ -156,6 +120,8 @@ public:
 protected:
 	void detect_boundary_nodes();
 	//Detect the boundary nodes of the CNT
+
+	TMKL_solver MKL_solver;                 //The MKL solver for this grid
 
 	friend class Tgrid_Polymer;
 };
