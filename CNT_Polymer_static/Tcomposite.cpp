@@ -10,49 +10,24 @@ void Tcomposite::Input()
 
 	_grid_Polymer.Input_Polymer();
 	_grid_Polymer.Calculate_stiffness_matrix();
-	//_grid_Polymer.calculate_load_from_constraint();
 	_grid_CNT.calculate_CNT_location(&_grid_Polymer);
-	//system("Pause");
 }
-//void Tcomposite::Calculate_F0_b()
-//{
-//	//Using zero Polymer displacement to calculate the constant term of _Fp
-//	_grid_CNT.calculate_CNT_boundary_displacement(&_grid_Polymer);
-//	_grid_CNT.calculate_load_from_constraint();
-//	_grid_CNT.Solving_equilibrium_equation();
-//	_grid_CNT.calculate_reacting_force();
-//	_grid_Polymer.initialize_load_total(1);
-//	_grid_Polymer.calculate_load_from_CNT(&_grid_CNT,1);
-//	_grid_Polymer.Calculate_b();
-//}
 void Tcomposite::Calculate_Fp()
 {
-	_grid_CNT.calculate_CNT_boundary_p(&_grid_Polymer);
-	_grid_CNT.calculate_load_from_constraint();
-	_grid_CNT.Solving_equilibrium_equation();
-	_grid_CNT.calculate_reacting_force();
 	_grid_Polymer.initialize_Fp();
-	_grid_Polymer.assemble_Fp(&_grid_CNT);
+	for (int i = 0; i < _num_CNT; i++)
+	{
+		_CNT_list[i].calculate_CNT_boundary_p(&_grid_Polymer);
+		_CNT_list[i].calculate_load_from_constraint();
+		_CNT_list[i].Solving_equilibrium_equation();
+		_CNT_list[i].calculate_reacting_force();
+		_grid_Polymer.assemble_Fp(&_CNT_list[i]);
+	}
+
 }
-//void Tcomposite::Calculate_Fd()
-//{
-//	_grid_CNT.calculate_CNT_boundary_displacement(&_grid_Polymer);
-//	_grid_CNT.calculate_load_from_constraint();
-//	_grid_CNT.Solving_equilibrium_equation();
-//	_grid_CNT.calculate_reacting_force();
-//	_grid_Polymer.initialize_load_total(3);
-//	_grid_Polymer.calculate_load_from_CNT(&_grid_CNT, 3);
-//}
 void Tcomposite::CG_iteration()
 {
 	CG_iteration_initialization();
-	//_grid_Polymer.CG_initialization();
-	//Calculate_F0_b();
-	//_grid_Polymer.Solving_equilibrium_equation();
-	//_grid_Polymer.CG_initialize_p();
-	//_grid_Polymer.Calculate_Kp();
-	//Calculate_Fp();
-	//_grid_Polymer.CG_initialize_r();
 	double diff = _grid_Polymer.calculate_diff();
 	if (diff<1e-10)
 	{
@@ -63,8 +38,6 @@ void Tcomposite::CG_iteration()
 	{
 		Calculate_Fp();
 		_grid_Polymer.Calculate_Kp();
-
-		//_grid_Polymer.Calculate_Ap();
 		_grid_Polymer.CG_update();
 		num_iteration = num_iteration + 1;
 		diff = _grid_Polymer.calculate_diff();
