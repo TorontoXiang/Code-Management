@@ -80,6 +80,7 @@ struct vec3D
 	//Multiply by a matrix
 	vec3D multiply_by_matrix(double(&A)[3][3]);
 	//Transfer the point into a new coordinate system
+	vec3D multiply_by_matrix_transpose(double(&A)[3][3]);
 	vec3D transfer_into_new_system(vec3D &n1, vec3D &n2, vec3D &n3, vec3D &x0);
 	//Get ith variable
 	double access(int i);

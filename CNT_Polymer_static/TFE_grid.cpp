@@ -772,9 +772,56 @@ void Tgrid_Polymer::assemble_Fp(Tgrid_CNT* grid_CNT)
 				for (int k = 0; k < 3; k++)
 				{
 					int freedom_id = _ID[3 * node_id + k];
+					//if (freedom_id<0)
+					//{
+					//	int fixed_id = -freedom_id - 1;
+					//	_reacting_force[fixed_id] = _reacting_force[fixed_id] - Nj * force_P2C[k];
+					//}
 					if (freedom_id>0)
 					{
 						_Fp[freedom_id - 1] = _Fp[freedom_id - 1] - Nj * force_P2C[k];
+					}
+					//int fixed_id = -freedom_j - 1;
+					//double re_force = 0;
+					//for (int k = 0; k < 24; k++)
+					//{
+					//	re_force = re_force + Ke[j][k] * d_cell[k];
+					//}
+					//_reacting_force[fixed_id] = _reacting_force[fixed_id] + re_force;
+				}
+			}
+		}
+	}
+	return;
+}
+void Tgrid_Polymer::assemble_reacting_froce_from_CNT(Tgrid_CNT* grid_CNT)
+{
+	int nump_CNT = grid_CNT->_nump;
+	for (int i = 0; i < nump_CNT; i++)
+	{
+		if (grid_CNT->_node_list[i]._is_surface)
+		{
+			int cell_id = grid_CNT->_node_list[i]._location->cell_id;
+			double xi = grid_CNT->_node_list[i]._location->iso_coor[0];
+			double eta = grid_CNT->_node_list[i]._location->iso_coor[1];
+			double zeta = grid_CNT->_node_list[i]._location->iso_coor[2];
+			double force_P2C[3];
+			for (int j = 0; j < 3; j++)
+			{
+				int fixed_id = -grid_CNT->_ID[3 * i + j] - 1;
+				force_P2C[j] = grid_CNT->_reacting_force[fixed_id];
+			}
+			for (int j = 0; j < 8; j++)
+			{
+				int node_id = _cell_list[cell_id]._node_ptr[j]->_id - 1;
+				double Nj = N_brick_8(j, xi, eta, zeta);
+				for (int k = 0; k < 3; k++)
+				{
+					int freedom_id = _ID[3 * node_id + k];
+					if (freedom_id<0)
+					{
+						int fixed_id = -freedom_id - 1;
+						_reacting_force[fixed_id] = _reacting_force[fixed_id] + Nj * force_P2C[k];
 					}
 				}
 			}
@@ -894,4 +941,78 @@ void Tgrid_Polymer::CG_initialization()
 		_r[i] = _p[i]+_F0[i];
 		_p[i] = _r[i];
 	}
+}
+void Tgrid_CNT::output_tecplot(ofstream& output)
+{
+	//Calculate cell stress
+	Sstress** cell_stress;
+	cell_stress = Calculate_cell_stress();
+	Snode_stress* node_stress;
+	node_stress = new Snode_stress[_nump];
+	int node_id;
+	for (int i = 0; i < _nume; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			node_id = _cell_list[i]._node_ptr[j]->_id - 1;
+			node_stress[node_id].num = node_stress[node_id].num + 1;
+			node_stress[node_id].add(cell_stress[i][j]);
+		}
+	}
+	for (int i = 0; i < _nump; i++)
+	{
+		node_stress[i].Average();
+	}
+	for (int i = 0; i < _nume; i++)
+	{
+		delete cell_stress[i];
+	}
+	delete cell_stress;
+	//Update the grid position
+	double** pos;
+	pos = new double*[_nump];
+	for (int i = 0; i < _nump; i++)
+	{
+		pos[i] = new double[3];
+	}
+	for (int i = 0; i < _nump; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			if (_ID[3 * i + j] > 0)
+			{
+				pos[i][j] = _node_list[i]._pos[j] + _dis[_ID[3 * i + j] - 1];
+			}
+			else if (_ID[3 * i + j] < 0)
+			{
+				pos[i][j] = _node_list[i]._pos[j] + _node_list[i]._bc_value[j];
+			}
+		}
+	}
+	//Output the Tecplot result
+	output << "TITLE = \"Tecplot Grid\"" << endl;
+	output << "VARIABLES = \"X\",\"Y\",\"Z\",\"SXX\",\"SYY\",\"SZZ\",\"SXY\",\"SXZ\",\"SYZ\",\"EQS\"" << endl;
+	output << "ZONE F=FEPOINT,N=" << _nump << "," << "E=" << _nume << "," << "ET=BRICK" << endl;
+	for (int i = 0; i < _nump; i++)
+	{
+		output << pos[i][0] << " " << pos[i][1] << " " << pos[i][2] << " ";
+		output << node_stress[i].sxx << " " << node_stress[i].syy << " " << node_stress[i].szz << " ";
+		output << node_stress[i].sxy << " " << node_stress[i].sxz << " " << node_stress[i].syz << " ";
+		output << node_stress[i].equivalent_stress() << endl;
+	}
+	for (int i = 0; i < _nume; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			output << _cell_list[i]._node_ptr[j]->_id << " ";
+		}
+		output << endl;
+	}
+	delete node_stress;
+	for (int i = 0; i < _nump; i++)
+	{
+		delete pos[i];
+	}
+	delete pos;
+	return;
 }

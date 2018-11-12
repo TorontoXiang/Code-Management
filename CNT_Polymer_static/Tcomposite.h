@@ -21,6 +21,10 @@ private:
 	//Initialize the variables in CG iteration, namely calculating _r and _p in _grid_Polymer
 	void Calculate_Fp();
 	//Calculate _Fp in _grid_Polymer
+	void Calculate_reacting_force();
+	//Calculate the reacting froce
+	void input_CNT_list();
+	//Input the CNT grid
 };
 #endif
 

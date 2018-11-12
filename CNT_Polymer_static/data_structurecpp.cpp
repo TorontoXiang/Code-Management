@@ -5,6 +5,13 @@ void Snode::calculate_location(double(&x_min)[3], double(&x_max)[3], double(&int
 {
 	if (_is_surface)
 	{
+		if (_pos[0]<x_min[0] || _pos[1] < x_min[1] || _pos[2] < x_min[2] || _pos[0] > x_max[0] || _pos[1] > x_max[1] || _pos[2] > x_max[2])
+		{
+			cout << _pos[0] << " " << _pos[1] << " " << _pos[2] << endl;
+			cout << "CNT node is out of the polymer" << endl;
+			system("Pause");
+			exit(0);
+		}
 		_location = new Slocation_info;
 		double delta[3];
 		delta[0] = _pos[0] - x_min[0]; delta[1] = _pos[1] - x_min[1]; delta[2] = _pos[2] - x_min[2];
@@ -79,6 +86,14 @@ vec3D vec3D::multiply_by_matrix(double(&A)[3][3])
 	temp.x = A[0][0] * x + A[0][1] * y + A[0][2] * z;
 	temp.y = A[1][0] * x + A[1][1] * y + A[1][2] * z;
 	temp.z = A[2][0] * x + A[2][1] * y + A[2][2] * z;
+	return temp;
+}
+vec3D vec3D::multiply_by_matrix_transpose(double(&A)[3][3])
+{
+	vec3D temp;
+	temp.x = A[0][0] * x + A[1][0] * y + A[2][0] * z;
+	temp.y = A[0][1] * x + A[1][1] * y + A[2][1] * z;
+	temp.z = A[0][2] * x + A[1][2] * y + A[2][2] * z;
 	return temp;
 }
 vec3D vec3D::transfer_into_new_system(vec3D &n1, vec3D &n2, vec3D &n3, vec3D &x0)

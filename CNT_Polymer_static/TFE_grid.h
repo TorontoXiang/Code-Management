@@ -71,6 +71,8 @@ public:
 	//Calculate the total external load on the polymer boundary
 	void assemble_Fp(Tgrid_CNT* grid_CNT);
 	//Assemble the Fp from a CNT grid
+	void assemble_reacting_froce_from_CNT(Tgrid_CNT* grid_CNT);
+	//Assemble the reacting force from CNT
 	void calculate_cell_p(int cell_id, double(&p_cell)[8][3]);
 	//Calculate cell p in CG iteration
 	void initialize_Fp();
@@ -117,6 +119,8 @@ public:
 	//Calculate the boundary p a CNT in CG_iteration
 	void Solving_equilibrium_equation();
 	//Solving the equilibrium equation (The RHS is only the load from constraint)
+	void output_tecplot(ofstream& output);
+	//Output the results of CNT
 protected:
 	void detect_boundary_nodes();
 	//Detect the boundary nodes of the CNT
