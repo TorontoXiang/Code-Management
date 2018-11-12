@@ -29,21 +29,14 @@ void Tgrid::calculate_ID()
 		}
 	}
 	_p = new double[_num_freedom_degree];
-	//_load_constraint = new double[_num_freedom_degree];
 	_dis = new double[_num_freedom_degree];
-	_reacting_force = new double[_num_fixed];
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
-		//_load_constraint[i] = _dis[i] = 0;
 		_p[i] = _dis[i] = 0;
-	}
-	for (int i = 0; i < _num_fixed; i++)
-	{
-		_reacting_force[i] = 0;
 	}
 	return;
 }
-void Tgrid::assemble_equations()
+void Tgrid_Polymer::assemble_equations()
 {
 	double Ke[24][24];
 	int LM[24];
@@ -92,7 +85,67 @@ void Tgrid::assemble_equations()
 	}
 	return;
 }
-void Tgrid::calculate_iK_jK()
+void Tgrid_CNT::assemble_equations()
+{
+	double Ke[24][24];
+	int LM[24];
+	int dis_ID[24];
+	//Initilize global stiffness matrix
+	for (int i = 0; i < _num_non_zero; i++)
+	{
+		_K[i] = 0;
+	}
+	//Assemble global matrix
+	for (int n = 0; n < _nume; n++)
+	{
+		//Calculate the LM vector
+		for (int i = 0; i < 8; i++)
+		{
+			int node_id = _cell_list[n]._node_ptr[i]->_id - 1;
+			for (int j = 0; j < 3; j++)
+			{
+				LM[3 * i + j] = _ID[3 * node_id + j];
+				dis_ID[3 * i + j] = 3 * node_id + j+1;
+			}
+		}
+		//Calculate the element stiffness matrix
+		Smat mat = _mat_list[_cell_list[n]._mid];
+		_cell_list[n].calculate_element_stiffness(Ke, mat);
+		//Assemble the global stiffness
+		for (int i = 0; i < 24; i++)
+		{
+			int freedom_i = LM[i];
+			if (freedom_i > 0)
+			{
+				//freedom_i is freedom
+				for (int j = 0; j < 24; j++)
+				{
+					int freedom_j = LM[j];
+					if (freedom_j > 0)
+					{
+						//freedom_j is freedom
+						if (freedom_i <= freedom_j)
+						{
+							//The element locates in the upper triangle
+							assmeble_stifness(freedom_i, freedom_j, _iK, _jK, _K, Ke[i][j]);
+						}
+					}
+				}
+			}
+			else if (freedom_i<0)
+			{
+				for (int j = 0; j < 24; j++)
+				{
+					int dis_ID_j = dis_ID[j];
+					//Assemble this element to _KB
+					assmeble_stifness(-freedom_i, dis_ID_j, _iKB, _jKB, _KB, Ke[i][j]);
+				}
+			}
+		}
+	}
+	return;
+}
+void Tgrid_Polymer::calculate_iK_jK()
 {
 	vector<vector<int>> IEN;
 	IEN.resize(_nume);
@@ -104,8 +157,41 @@ void Tgrid::calculate_iK_jK()
 			IEN[i][j] = _cell_list[i]._node_ptr[j]->_id;
 		}
 	}
-	calculate_matrix_structure(_ID, IEN, _num_freedom_degree, 3, _iK, _jK, _num_non_zero);
+	calculate_matrix_structure_KII(_ID, IEN, _num_freedom_degree, 3, _iK, _jK, _num_non_zero);
 	_K = new double[_num_non_zero];
+	//Allocate memory for reacting froce
+	_reacting_force = new double[_num_fixed];
+	for (int i = 0; i < _num_fixed; i++)
+	{
+		_reacting_force[i] = 0;
+	}
+	return;
+}
+void Tgrid_CNT::calculate_iK_jK()
+{
+	vector<vector<int>> IEN;
+	IEN.resize(_nume);
+	for (int i = 0; i < _nume; i++)
+	{
+		IEN[i].resize(8);
+		for (int j = 0; j < 8; j++)
+		{
+			IEN[i][j] = _cell_list[i]._node_ptr[j]->_id;
+		}
+	}
+	//Calculate the sparse matrix structure for solving the equilibrium equation (KII)
+	calculate_matrix_structure_KII(_ID, IEN, _num_freedom_degree, 3, _iK, _jK, _num_non_zero);
+	_K = new double[_num_non_zero];
+	//Calculate the sparse matrix structure for calculating the racting force (KB)
+	calculate_matrix_structure_KB(_ID, IEN, 3 * _nump, 3, _iKB, _jKB, _num_non_zero);
+	_KB = new double[_num_non_zero];
+	//Allocate memory for reacting froce
+	_reacting_force = new double[3*_nump];
+	_dis_whole = new double[3 * _nump];
+	for (int i = 0; i < 3 * _nump; i++)
+	{
+		_reacting_force[i] = _dis_whole[i] = 0;
+	}
 	return;
 }
 void Tgrid_CNT::Create_MKL_solver()
@@ -549,7 +635,7 @@ void Tgrid::detect_boundary_cells()
 	}
 	return;
 }
-void Tgrid::calculate_reacting_force()
+void Tgrid_Polymer::calculate_reacting_force()
 {
 	for (int i = 0; i < _num_fixed; i++)
 	{
@@ -596,6 +682,31 @@ void Tgrid::calculate_reacting_force()
 			}
 		}
 	}
+	return;
+}
+void Tgrid_CNT::calculate_reacting_force()
+{
+	for (int i = 0; i < 3*_nump; i++)
+	{
+		_reacting_force[i] = 0;
+	}
+	for (int i = 0; i < _nump; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			if (_ID[3*i+j]>0)
+			{
+				_dis_whole[3 * i + j] = _dis[_ID[3 * i + j] - 1];
+			}
+			else
+			{
+				_dis_whole[3 * i + j] = _node_list[i]._bc_value[j];
+			}
+		}
+	}
+	char uplo = 'n';
+	int m = _nump * 3;
+	mkl_dcsrgemv(&uplo, &m, _KB, _iKB, _jKB, _dis_whole, _reacting_force);
 	return;
 }
 vec3D Tgrid_Polymer::calculate_external_load(string face_name)
@@ -655,7 +766,7 @@ vec3D Tgrid_Polymer::calculate_external_load(string face_name)
 	}
 	return external_force;
 }
-void Tgrid::calculate_load_from_constraint()
+void Tgrid_Polymer::calculate_load_from_constraint()
 {
 	int LM[24];
 	double Ke[24][24], load_e[24];
@@ -703,6 +814,39 @@ void Tgrid::calculate_load_from_constraint()
 						}
 					}
 				}
+			}
+		}
+	}
+	return;
+}
+void Tgrid_CNT::calculate_load_from_constraint()
+{
+	for (int i = 0; i < _num_freedom_degree; i++)
+	{
+		_p[i] = 0;
+	}
+	for (int i = 0; i < _nump; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			int fixed_id = _ID[3 * i + j];
+			if (fixed_id <0)
+			{
+				_dis_whole[-fixed_id - 1] = _node_list[i]._bc_value[j];
+			}
+		}
+	}
+	char uplo = 't';
+	int m = _nump * 3;
+	mkl_dcsrgemv(&uplo, &m, _KB, _iKB, _jKB, _dis_whole, _reacting_force);
+	for (int i = 0; i < _nump; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			int freedom_id= _ID[3 * i + j];
+			if (freedom_id>0)
+			{
+				_p[freedom_id - 1] = -_reacting_force[3 * i + j];
 			}
 		}
 	}
@@ -772,22 +916,10 @@ void Tgrid_Polymer::assemble_Fp(Tgrid_CNT* grid_CNT)
 				for (int k = 0; k < 3; k++)
 				{
 					int freedom_id = _ID[3 * node_id + k];
-					//if (freedom_id<0)
-					//{
-					//	int fixed_id = -freedom_id - 1;
-					//	_reacting_force[fixed_id] = _reacting_force[fixed_id] - Nj * force_P2C[k];
-					//}
 					if (freedom_id>0)
 					{
 						_Fp[freedom_id - 1] = _Fp[freedom_id - 1] - Nj * force_P2C[k];
 					}
-					//int fixed_id = -freedom_j - 1;
-					//double re_force = 0;
-					//for (int k = 0; k < 24; k++)
-					//{
-					//	re_force = re_force + Ke[j][k] * d_cell[k];
-					//}
-					//_reacting_force[fixed_id] = _reacting_force[fixed_id] + re_force;
 				}
 			}
 		}

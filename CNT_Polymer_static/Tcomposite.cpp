@@ -3,17 +3,22 @@ void Tcomposite::Input()
 {
 	_grid_Polymer.Input_Polymer();
 	_grid_Polymer.Calculate_stiffness_matrix();
+	cout << "Input CNT" << endl;
 	input_CNT_list();
 }
 void Tcomposite::Calculate_Fp()
 {
 	_grid_Polymer.initialize_Fp();
+	#pragma omp parallel for schedule(dynamic)
 	for (int i = 0; i < _num_CNT; i++)
 	{
 		_CNT_list[i].calculate_CNT_boundary_p(&_grid_Polymer);
 		_CNT_list[i].calculate_load_from_constraint();
 		_CNT_list[i].Solving_equilibrium_equation();
 		_CNT_list[i].calculate_reacting_force();
+	}
+	for (int i = 0; i < _num_CNT; i++)
+	{
 		_grid_Polymer.assemble_Fp(&_CNT_list[i]);
 	}
 }

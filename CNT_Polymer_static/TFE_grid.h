@@ -16,10 +16,6 @@ public:
 	//Calcaulte the stress at the 8 Gauss points of each cell
 	void Output_Tecplot(string file_name,int mid=-1);
 	//Calculate the stress and output;
-	void calculate_reacting_force();
-	//Calculate the reacting force of each constraint
-	void calculate_load_from_constraint();
-	//Calculate _load_constraint
 protected:
 	vector<Snode> _node_list;
 	vector<Tcell> _cell_list;
@@ -40,6 +36,8 @@ protected:
 											//2. The RHS of the equilibrium equation in Tgrid_CNT
 											//3. Temporary store the RHS from boundary condition in Tgrid_Polymer when initilizing the CG iteration                             
 	double* _reacting_force;                //The reacting force from the boundary condition
+	                                        //_num_fixed dimension for Tgrid_Polymer
+	                                        //3*_nump dimension for Tgrid_CNT
 	double* _dis;                           //The displacement at each freedom of degree
 
 
@@ -49,10 +47,6 @@ protected:
 
 	void calculate_ID();
 	//Calculate the ID vector and the freedom degree of the system
-	void calculate_iK_jK();
-	//Calculate iK and jK of the stifness matrix
-	void assemble_equations();
-	//Assemble the equations: calculate K and _load
 	void calculate_cell_displacement(int cell_id,double(&d_cell)[8][3]);
 	//Calculate the displacement of each cell
 	void detect_boundary_cells();
@@ -69,10 +63,16 @@ public:
 	//Input the regular polymer grid
 	vec3D calculate_external_load(string face_name);
 	//Calculate the total external load on the polymer boundary
-	void assemble_Fp(Tgrid_CNT* grid_CNT);
-	//Assemble the Fp from a CNT grid
+	void calculate_reacting_force();
+	//Calculate the reacting force of each constraint
+	void calculate_load_from_constraint();
+	//Calculate _load_constraint
 	void assemble_reacting_froce_from_CNT(Tgrid_CNT* grid_CNT);
 	//Assemble the reacting force from CNT
+
+	//Functions for CG iteration
+	void assemble_Fp(Tgrid_CNT* grid_CNT);
+	//Assemble the Fp from a CNT grid
 	void calculate_cell_p(int cell_id, double(&p_cell)[8][3]);
 	//Calculate cell p in CG iteration
 	void initialize_Fp();
@@ -100,7 +100,10 @@ protected:
 	double* _F0;
 
 	void apply_regular_bc(Sregular_grid_bc& bc);
-
+	void calculate_iK_jK();
+	//Calculate iK and jK of the stifness matrix
+	void assemble_equations();
+	//Assemble the equations: calculate K matrix
 	friend class Tgrid_CNT;
 };
 class Tgrid_CNT : public Tgrid
@@ -119,6 +122,10 @@ public:
 	//Calculate the boundary p a CNT in CG_iteration
 	void Solving_equilibrium_equation();
 	//Solving the equilibrium equation (The RHS is only the load from constraint)
+	void calculate_reacting_force();
+	//Calculate the reacting force of each constraint
+	void calculate_load_from_constraint();
+	//Calculate _load_constraint
 	void output_tecplot(ofstream& output);
 	//Output the results of CNT
 protected:
@@ -126,7 +133,16 @@ protected:
 	//Detect the boundary nodes of the CNT
 
 	TMKL_solver MKL_solver;                 //The MKL solver for this grid
+	double* _dis_whole;                      //The displacement of all
 
+	int* _iKB;
+	int* _jKB;
+	double* _KB;                           //The sparse matrix for calculating the reacting force
+
+	void calculate_iK_jK();
+	//Calculate iK and jK of the stifness matrix
+	void assemble_equations();
+	//Assemble the equations: calculate K and KB matrix
 	friend class Tgrid_Polymer;
 };
 #endif
