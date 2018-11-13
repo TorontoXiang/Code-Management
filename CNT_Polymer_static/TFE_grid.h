@@ -23,7 +23,6 @@ protected:
 
 	//Variables for solving equilibrium equation
 	int _num_freedom_degree;                //The number of freedom degree
-	int _num_non_zero;                      //The number of non-zero elements in the stifness matrix
 	int _num_fixed;                         //The number of fiexed freedom degree
 	vector<int> _ID;                        //The freedom degree id of every node at 3 direction
 											//>0:  The freedom degree id

@@ -10,7 +10,7 @@ void fixed_point_iteration();
 void CG_iteration();
 int main()
 {
-	omp_set_num_threads(4);
+	omp_set_num_threads(16);
 	//Skeyword keyword;
 	//ifstream input;
 	//input.open("benchmark.k");
