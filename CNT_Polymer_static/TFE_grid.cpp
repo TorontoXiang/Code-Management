@@ -6,6 +6,7 @@
 #include "Shape_function.h"
 #include "mkl.h"
 #include "mkl_blas.h"
+#include <cmath>
 using namespace std;
 void Tgrid::calculate_ID()
 {
@@ -40,11 +41,6 @@ void Tgrid_Polymer::assemble_equations()
 {
 	double Ke[24][24];
 	int LM[24];
-	//Initilize global stiffness matrix
-	for (int i = 0; i < _num_non_zero; i++)
-	{
-		_K[i] = 0;
-	}
 	//Assemble global matrix
 	for (int n = 0; n < _nume; n++)
 	{
@@ -90,11 +86,6 @@ void Tgrid_CNT::assemble_equations()
 	double Ke[24][24];
 	int LM[24];
 	int dis_ID[24];
-	//Initilize global stiffness matrix
-	for (int i = 0; i < _num_non_zero; i++)
-	{
-		_K[i] = 0;
-	}
 	//Assemble global matrix
 	for (int n = 0; n < _nume; n++)
 	{
@@ -157,8 +148,13 @@ void Tgrid_Polymer::calculate_iK_jK()
 			IEN[i][j] = _cell_list[i]._node_ptr[j]->_id;
 		}
 	}
-	calculate_matrix_structure_KII(_ID, IEN, _num_freedom_degree, 3, _iK, _jK, _num_non_zero);
-	_K = new double[_num_non_zero];
+	int num_non_zero;
+	calculate_matrix_structure_KII(_ID, IEN, _num_freedom_degree, 3, _iK, _jK, num_non_zero);
+	_K = new double[num_non_zero];
+	for (int i = 0; i < num_non_zero; i++)
+	{
+		_K[i] = 0;
+	}
 	//Allocate memory for reacting froce
 	_reacting_force = new double[_num_fixed];
 	for (int i = 0; i < _num_fixed; i++)
@@ -180,11 +176,20 @@ void Tgrid_CNT::calculate_iK_jK()
 		}
 	}
 	//Calculate the sparse matrix structure for solving the equilibrium equation (KII)
-	calculate_matrix_structure_KII(_ID, IEN, _num_freedom_degree, 3, _iK, _jK, _num_non_zero);
-	_K = new double[_num_non_zero];
+	int num_non_zero;
+	calculate_matrix_structure_KII(_ID, IEN, _num_freedom_degree, 3, _iK, _jK, num_non_zero);
+	_K = new double[num_non_zero];
+	for (int i = 0; i < num_non_zero; i++)
+	{
+		_K[i] = 0;
+	}
 	//Calculate the sparse matrix structure for calculating the racting force (KB)
-	calculate_matrix_structure_KB(_ID, IEN, 3 * _nump, 3, _iKB, _jKB, _num_non_zero);
-	_KB = new double[_num_non_zero];
+	calculate_matrix_structure_KB(_ID, IEN, 3 * _nump, 3, _iKB, _jKB, num_non_zero);
+	_KB = new double[num_non_zero];
+	for (int i = 0; i < num_non_zero; i++)
+	{
+		_KB[i] = 0;
+	}
 	//Allocate memory for reacting froce
 	_reacting_force = new double[3*_nump];
 	_dis_whole = new double[3 * _nump];
@@ -838,6 +843,22 @@ void Tgrid_CNT::calculate_load_from_constraint()
 	}
 	char uplo = 't';
 	int m = _nump * 3;
+	//for (int i = 0; i < m; i++)
+	//{
+	//	if (isnan(_dis_whole[i]))
+	//	{
+	//		cout << "nan occur in _dis_whole" << endl;
+	//		system("Pause");
+	//	}
+	//}
+	//for (int i = 0; i < m; i++)
+	//{
+	//	if (isnan(_reacting_force[i]))
+	//	{
+	//		cout << "nan occur in _dis_whole" << endl;
+	//		system("Pause");
+	//	}
+	//}
 	mkl_dcsrgemv(&uplo, &m, _KB, _iKB, _jKB, _dis_whole, _reacting_force);
 	for (int i = 0; i < _nump; i++)
 	{
@@ -847,6 +868,18 @@ void Tgrid_CNT::calculate_load_from_constraint()
 			if (freedom_id>0)
 			{
 				_p[freedom_id - 1] = -_reacting_force[3 * i + j];
+				//if (isnan(_p[freedom_id - 1]))
+				//{
+				//	cout << "nan occur in calculate_load_from_constraint()" << endl;
+				//	ofstream output;
+				//	output.open("_KB.k");
+				//	int num_non_zero = _iKB[m] - 1;
+				//	for (int i = 0; i < num_non_zero; i++)
+				//	{
+				//		output << _KB[i] << endl;
+				//	}
+				//	system("Pause");
+				//}
 			}
 		}
 	}
@@ -1068,9 +1101,20 @@ double Tgrid_Polymer::calculate_diff()
 }
 void Tgrid_Polymer::CG_initialization()
 {
+	//ofstream output1, output2;
+	//output1.open("_p.k");
+	//output2.open("_f.k");
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
 		_r[i] = _p[i]+_F0[i];
+		//if (isnan(_p[i]))
+		//{
+		//	output1 << i << " " << _p[i] << endl;
+		//}
+		//if (isnan(_F0[i]))
+		//{
+		//	output2 << i << " " << _F0[i] << endl;
+		//}
 		_p[i] = _r[i];
 	}
 }

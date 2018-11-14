@@ -26,7 +26,7 @@ void Tcomposite::CG_iteration()
 {
 	CG_iteration_initialization();
 	double diff = _grid_Polymer.calculate_diff();
-	if (diff<1e-10)
+	if (diff<1e-12)
 	{
 		return;
 	}
