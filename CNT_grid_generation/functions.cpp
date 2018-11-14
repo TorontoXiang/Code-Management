@@ -1,4 +1,5 @@
 #include "functions.h"
+#include "TCNT_grid.h"
 double min_dis(vec3D x1, vec3D x2, vec3D x3, vec3D x4)
 {
 	vec3D p = x1 - x3, n1 = x2 - x1, n3 = x4 - x3;
@@ -237,5 +238,32 @@ void Create_straight_CNT_net(int num_CNT, double l_CNT,double lx, double ly, dou
 	{
 		total_length = total_length + (CNT_list1[i] - CNT_list2[i]).get_length();
 	}
-	cout << total_length << endl;
+	cout << "The total length is: "<<total_length << endl;
+
+	//Output the CNT grid
+	ofstream output_k,output_tec;
+	output_k.open("CNT_grid.k");
+	output_tec.open("CNT_grid.dat");
+	double size_l = 0.67*3;
+	for (int i = 0; i < CNT_list1.size(); i++)
+	{
+		double l = (CNT_list1[i] - CNT_list2[i]).get_length();
+		int n_divided = int(l / size_l)+2;
+		Generate_straight_CNT(CNT_list1[i], CNT_list2[i], n_divided, 0.335, 0.335*0.6, 1, 2, output_k,output_tec, 860, 0.17);
+	}
+	output_k << "*END" << endl;
+}
+void Generate_straight_CNT(vec3D p1, vec3D p2, int n_divided, double r, double l, int m, int n, ofstream& output_k, ofstream& output_tec, double E, double mu)
+{
+	vector<vec3D> node_list;
+	for (int i = 0; i < n_divided + 1; i++)
+	{
+		vec3D pos = p1 + (p2 - p1)*i / n_divided;
+		node_list.push_back(pos);
+	}
+	TCNT_grid CNT_grid(node_list);
+	CNT_grid.generate_CNT_grid(r, l, m, n);
+	CNT_grid.output_CNT_k_file(output_k, E, mu);
+	CNT_grid.output_CNT_tecplot(output_tec);
+	return;
 }

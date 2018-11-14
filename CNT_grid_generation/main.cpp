@@ -8,7 +8,6 @@
 #include <Windows.h>
 
 using namespace std;
-void Generate_straight_CNT(vec3D p1, vec3D p2, int n_divided, double r, double l, int m, int n, ofstream& output_k,ofstream& output_tec, double E, double mu);
 int main()
 {
 	Create_straight_CNT_net(300, 67, 67, 67, 67);
@@ -39,19 +38,5 @@ int main()
 
 	system("Pause");
 	return 0;
-}
-void Generate_straight_CNT(vec3D p1, vec3D p2, int n_divided, double r, double l, int m, int n,ofstream& output_k, ofstream& output_tec,double E,double mu)
-{
-	vector<vec3D> node_list;
-	for (int i = 0; i < n_divided +1; i++)
-	{
-		vec3D pos = p1 + (p2 - p1)*i / n_divided;
-		node_list.push_back(pos);
-	}
-	TCNT_grid CNT_grid(node_list);
-	CNT_grid.generate_CNT_grid(r, l, m, n);
-	CNT_grid.output_CNT_k_file(output_k, E, mu);
-	CNT_grid.output_CNT_tecplot(output_tec);
-	return;
 }
 

@@ -1,6 +1,7 @@
 #ifndef DATA_STRUCTURE
 #define DATA_STRUCTURE
 #include <vector>
+#include <fstream>
 using namespace std;
 struct Slocation_info
 {
