@@ -3,6 +3,7 @@
 #include "data_structure.h"
 #include <vector>
 #include <fstream>
+#include "functions.h"
 using namespace std;
 class Ttruncation
 {
@@ -26,7 +27,7 @@ class TCNT_grid
 {
 public:
 	TCNT_grid(vector<vec3D> node_list);
-	void generate_CNT_grid(double r, double l, double m, double n);
+	void generate_CNT_grid(double r, double l, int m, int n);
 	//r:radiu of CNT, l:inner square length
 	//m:rudial direction division, n:ring direction division
 	void output_CNT_tecplot(ofstream& output);
@@ -35,10 +36,5 @@ private:
 	int _num_node;
 	vector<Ttruncation> _truncation_list;
 };
-
-void T_matrix(vec3D z, double(&T)[3][3]);
-//Calculate the Transformation matrix between two coordinate system 1 and 2
-//z: the coordinate of z-axis of system 2 in system 1
-void matrix_multiply(double(&A1)[3][3], double(&A2)[3][3], double(&A)[3][3]);
 int calculate_index(int i, int j, int i_max2, int i_max1, int j_max1, int nump1);
 #endif

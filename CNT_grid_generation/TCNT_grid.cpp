@@ -135,76 +135,22 @@ TCNT_grid::TCNT_grid(vector<vec3D> node_list)
 			_truncation_list[i]._c_t = 1;
 		}
 		z=z.multiply_by_matrix_transpose(_truncation_list[i - 1]._A);  //The normal of ith truncation in the coordinate system of (i-1) truncation face
-		double T[3][3];
+		double T[3][3],temp[3][3];
 		T_matrix(z, T);         //Calculate the transformation from i to i-1 truncation face
-		matrix_multiply(_truncation_list[i - 1]._A, T, _truncation_list[i]._A);    //Calculate the transformation from i to global system
+		matrix_multiply(_truncation_list[i - 1]._A, T, temp);    //Calculate the transformation from i to global system
+		//Calculate the axis of the new system and recalculate the transformation matrix to avoid numerical instability
+		vec3D axis_x(temp[0][0],temp[1][0],temp[2][0]), axis_y(temp[0][1], temp[1][1], temp[2][1]), axis_z(temp[0][2], temp[1][2], temp[2][2]);
+		axis_z.normalize();
+		axis_y = (axis_z%axis_x); axis_y.normalize();
+		axis_x = (axis_y%axis_z); axis_z.normalize();
+		_truncation_list[i ]._A[0][0] = axis_x.x; _truncation_list[i]._A[1][0] = axis_x.y; _truncation_list[i]._A[2][0] = axis_x.z;
+		_truncation_list[i]._A[0][1] = axis_y.x; _truncation_list[i]._A[1][1] = axis_y.y; _truncation_list[i]._A[2][1] = axis_y.z;
+		_truncation_list[i]._A[0][2] = axis_z.x; _truncation_list[i]._A[1][2] = axis_z.y; _truncation_list[i]._A[2][2] = axis_z.z;
 	}
 	return;
 }
 
-void T_matrix(vec3D z, double(&T)[3][3])
-{
-	double s_t, c_t, s_p, c_p;
-	double eps = 1e-20;
-	if (abs(z.z-1) < 1e-15)
-	{
-		T[0][0] = 1; T[0][1] = T[0][2] = 0;
-		T[1][1] = 1; T[1][0] = T[1][2] = 0;
-		T[2][0] = T[2][1] = 0; T[2][2] = 1;
-	}
-	else
-	{
-		c_t = z.z; s_t = sqrt(1 - c_t * c_t);
-		double l = sqrt(z.x*z.x + z.y*z.y);
-		c_p = -z.y / l; s_p = -z.x / l;
-		T[0][0] = c_p * c_p + s_p * s_p*c_t; T[0][1] = -c_p * s_p + s_p * c_p*c_t; T[0][2] = z.x;
-		T[1][0] = -s_p * c_p + c_p * s_p*c_t; T[1][1] = s_p * s_p + c_p * c_p*c_t; T[1][2] = z.y;
-		T[2][0] = s_t * s_p; T[2][1] = s_t * c_p; T[2][2] = z.z;
-	}
-	return;
-}
-void matrix_multiply(double(&A1)[3][3], double(&A2)[3][3], double(&A)[3][3])
-{
-	for (int i = 0; i < 3; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			A[i][j] = 0;
-			for (int k = 0; k < 3; k++)
-			{
-				A[i][j] = A[i][j] + A1[i][k] * A2[k][j];
-			}
-		}
-	}
-	return;
-}
-int calculate_index(int i, int j, int i_max2, int i_max1, int j_max1, int nump1)
-{
-	int index;
-	int i1, j1 = j_max1;
-	if (i == 0)
-	{
-		i1 = (4 * i_max2 - j) % (4 * i_max2); index = i_max1 * j1 + i1;
-	}
-	else if (j == 0)
-	{
-		i1 = i; index = i_max1 * j1 + i1;
-	}
-	else if (i == i_max2)
-	{
-		i1 = i_max2 + j; index = i_max1 * j1 + i1;
-	}
-	else if (j == i_max2)
-	{
-		i1 = 3 * i_max2 - i; index = i_max1 * j1 + i1;
-	}
-	else
-	{
-		i = i - 1; j = j - 1; index = (i_max2 - 1)*j + i + nump1;
-	}
-	return index;
-}
-void TCNT_grid::generate_CNT_grid(double r, double l, double m, double n)
+void TCNT_grid::generate_CNT_grid(double r, double l, int m, int n)
 {
 	for (int i = 0; i < _num_node; i++)
 	{
@@ -286,4 +232,30 @@ void TCNT_grid::output_CNT_k_file(ofstream& output,double E,double mu)
 	output << "*MAT_ELASTIC" << endl;
 	output << 1 << " 1 " << E << " " << mu << endl;
 	output << "*END_CNT" << endl;
+}
+int calculate_index(int i, int j, int i_max2, int i_max1, int j_max1, int nump1)
+{
+	int index;
+	int i1, j1 = j_max1;
+	if (i == 0)
+	{
+		i1 = (4 * i_max2 - j) % (4 * i_max2); index = i_max1 * j1 + i1;
+	}
+	else if (j == 0)
+	{
+		i1 = i; index = i_max1 * j1 + i1;
+	}
+	else if (i == i_max2)
+	{
+		i1 = i_max2 + j; index = i_max1 * j1 + i1;
+	}
+	else if (j == i_max2)
+	{
+		i1 = 3 * i_max2 - i; index = i_max1 * j1 + i1;
+	}
+	else
+	{
+		i = i - 1; j = j - 1; index = (i_max2 - 1)*j + i + nump1;
+	}
+	return index;
 }

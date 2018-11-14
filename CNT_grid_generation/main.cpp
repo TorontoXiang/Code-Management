@@ -10,7 +10,14 @@
 using namespace std;
 int main()
 {
-	Create_straight_CNT_net(300, 67, 67, 67, 67);
+	vec3D p_begin(0, 0, 0);
+	int n_divided = 50;
+	ofstream output_k,output_tec;
+	output_k.open("CNT_grid.k");
+	output_tec.open("CNT_grid.dat");
+	Create_wavy_CNT_net(200, 67, 50,3.0, 67, 67, 67,860,0.17);
+	//Generate_wavy_CNT(p_begin, 4.0, n_divided, 67);
+	//Create_straight_CNT_net(300, 67, 67, 67, 67);
 	//ofstream output_k,output_tec;
 	//output_k.open("CNT_grid.k");
 	//output_tec.open("CNT_grid.dat");
