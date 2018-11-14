@@ -10,7 +10,7 @@
 using namespace std;
 int main()
 {
-	Create_straight_CNT_net(300, 67, 67, 67, 67);
+	Create_straight_CNT_net(400, 67, 67, 67, 67);
 	//ofstream output_k,output_tec;
 	//output_k.open("CNT_grid.k");
 	//output_tec.open("CNT_grid.dat");
