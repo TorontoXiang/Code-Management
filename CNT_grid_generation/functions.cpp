@@ -253,9 +253,9 @@ void Create_straight_CNT_net(int num_CNT, double l_CNT,double lx, double ly, dou
 	}
 	output_k << "*END" << endl;
 }
-void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double ratio,double lx, double ly, double lz,double E,double mu)
+void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double lx, double ly, double lz)
 {
-	double r = 0.335, d_vdw = 0.34;
+	double r = 0.335, d_vdw = 0.34, ratio = 3, E = 860, mu = 0.17;
 	vec3D x_min[3][3][3];
 	//Create the minimal coordinate of the 27 boxes
 	for (int i = 0; i < 3; i++)
@@ -345,7 +345,7 @@ void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double ratio,
 	}
 	cout << "Output CNT net" << endl;
 	ofstream output_tec,output_k;
-	output_tec.open("Wavy_CNT.dat");
+	output_tec.open("CNT_grid.dat");
 	output_k.open("CNT_grid.k");
 	for (int i = 0; i < effective_curve_list.size(); i=i++)
 	{
