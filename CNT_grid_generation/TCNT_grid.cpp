@@ -154,8 +154,8 @@ void TCNT_grid::generate_CNT_grid(double r, double l, int m, int n)
 {
 	for (int i = 0; i < _num_node; i++)
 	{
-		double ri=r/_truncation_list[i]._c_t, li=l/ _truncation_list[i]._c_t;
-		_truncation_list[i].generate_truncation_grid(ri, li, m, n);
+		//double ri=r/_truncation_list[i]._c_t, li=l/ _truncation_list[i]._c_t;
+		_truncation_list[i].generate_truncation_grid(r, l, m, n);
 	}
 }
 void TCNT_grid::output_CNT_tecplot(ofstream& output)

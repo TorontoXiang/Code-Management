@@ -15,7 +15,14 @@ int main()
 	ofstream output_k,output_tec;
 	output_k.open("CNT_grid.k");
 	output_tec.open("CNT_grid.dat");
-	Create_wavy_CNT_net(200, 67, 50,3.0, 67, 67, 67,860,0.17);
+	//vec3D p1(10, 4, 1), p2(10, 3, 1), p3(10, 2, 1), p4(10, 1, 1), p5(10, -1, 1), p6(10, -2, 1), p7(10, -3, 1);
+	//vector<vec3D> curve;
+	//curve.push_back(p1); curve.push_back(p2); curve.push_back(p3); curve.push_back(p4); curve.push_back(p5);
+	//curve.push_back(p6); curve.push_back(p7);
+	//vector<vector<vec3D>> temp;
+	//vec3D mini(0, 0, 0), maxi(100, 100, 100);
+	//effective_curve(curve, temp, mini, maxi);
+	Create_wavy_CNT_net(200, 67, 45,3.0, 67, 67, 67,860,0.17);
 	//Generate_wavy_CNT(p_begin, 4.0, n_divided, 67);
 	//Create_straight_CNT_net(300, 67, 67, 67, 67);
 	//ofstream output_k,output_tec;

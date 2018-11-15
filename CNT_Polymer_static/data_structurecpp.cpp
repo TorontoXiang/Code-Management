@@ -10,7 +10,8 @@ void Snode::calculate_location(double(&x_min)[3], double(&x_max)[3], double(&int
 			cout << _pos[0] << " " << _pos[1] << " " << _pos[2] << endl;
 			cout << "CNT node is out of the polymer" << endl;
 			system("Pause");
-			exit(0);
+			//return;
+			//exit(0);
 		}
 		_location = new Slocation_info;
 		double delta[3];

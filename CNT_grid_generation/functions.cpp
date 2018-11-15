@@ -276,7 +276,7 @@ void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double ratio,
 	while (num_input < num_CNT)
 	{
 		p_begin.value(lx*rand() / RAND_MAX, ly*rand() / RAND_MAX, lz*rand() / RAND_MAX);
-		vector<vec3D> new_curve = Generate_wavy_CNT(p_begin, ratio, 50, 67);
+		vector<vec3D> new_curve = Generate_wavy_CNT(p_begin, ratio, n_divided, l_CNT);
 		is_survive = true;
 		for (int i = 0; i < 3; i++)
 		{
@@ -350,13 +350,14 @@ void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double ratio,
 	for (int i = 0; i < effective_curve_list.size(); i=i++)
 	{
 		TCNT_grid CNT_grid(effective_curve_list[i]);
-		CNT_grid.generate_CNT_grid(r, r*0.6, 1, 3);
+		CNT_grid.generate_CNT_grid(r, r*0.6, 1, 2);
 		CNT_grid.output_CNT_tecplot(output_tec);
 		if (effective_curve_list[i].size()!=2)
 		{
 			CNT_grid.output_CNT_k_file(output_k, E, mu);
 		}
 	}
+	output_k << "*END" << endl;
 }
 void Generate_straight_CNT(vec3D p1, vec3D p2, int n_divided, double r, double l, int m, int n, ofstream& output_k, ofstream& output_tec, double E, double mu)
 {
@@ -508,15 +509,16 @@ bool effective_range(vec3D &x_min1, vec3D &x_max1, vec3D& x_min2, vec3D x_max2, 
 }
 bool is_in_range(vec3D p1, vec3D p2,vec3D x_min, vec3D x_max)
 {
+	bool is_in = true;
 	if (p1.x<x_min.x || p1.x>x_max.x || p1.y<x_min.y || p1.y>x_max.y || p1.z<x_min.z || p1.z>x_max.z)
 	{
-		if (p2.x<x_min.x || p2.x>x_max.x || p2.y<x_min.y || p2.y>x_max.y || p2.z<x_min.z || p2.z>x_max.z)
-		{
-			return false;
-		}
-		return false;
+		is_in = false;
 	}
-	return true;
+	if (p2.x<x_min.x || p2.x>x_max.x || p2.y<x_min.y || p2.y>x_max.y || p2.z<x_min.z || p2.z>x_max.z)
+	{
+		is_in=false;
+	}
+	return is_in;
 }
 void move_curve(vector<vec3D> &curve, vec3D motion)
 {
