@@ -87,7 +87,7 @@ void Create_straight_CNT_net(int num_CNT, double l_CNT,double lx, double ly, dou
 		dx.value(lx*rand() / RAND_MAX, ly*rand() / RAND_MAX, lz*rand() / RAND_MAX);
 		phy = 2 * pi*rand() / RAND_MAX;
 		theta = pi*rand() / RAND_MAX;
-		dl.value(l_CNT*cos(theta)*cos(phy), l_CNT*cos(theta)*sin(phy), l_CNT*sin(theta));
+		dl.value(l_CNT*sin(theta)*cos(phy), l_CNT*sin(theta)*sin(phy), l_CNT*cos(theta));
 		//dx.value(1, 1, 1);
 		//theta = pi*0.5;
 		//phy = pi*0.5;
