@@ -86,8 +86,11 @@ void Create_straight_CNT_net(int num_CNT, double l_CNT,double lx, double ly, dou
 	{
 		dx.value(lx*rand() / RAND_MAX, ly*rand() / RAND_MAX, lz*rand() / RAND_MAX);
 		phy = 2 * pi*rand() / RAND_MAX;
-		theta = pi*rand() / RAND_MAX;
-		dl.value(l_CNT*sin(theta)*cos(phy), l_CNT*sin(theta)*sin(phy), l_CNT*cos(theta));
+		double c_theta = 1.0*rand() / RAND_MAX;
+		theta = acos(c_theta);
+		//theta = 2*pi*rand() / RAND_MAX;
+		dl.value(l_CNT*sin(theta)*cos(phy), l_CNT*sin(theta)*sin(phy), l_CNT*c_theta);
+		//dl.value(l_CNT*cos(theta)*cos(phy), l_CNT*cos(theta)*sin(phy), l_CNT*sin(theta));
 		//dx.value(1, 1, 1);
 		//theta = pi*0.5;
 		//phy = pi*0.5;
@@ -387,9 +390,16 @@ vector<vec3D> Generate_wavy_CNT(vec3D p_begin, double ratio, int n_divided, doub
 	//srand((int)time(0));
 	for (int i = 1; i < n_divided+1; i++)
 	{
-		if (i==1) theta = pi * rand() / RAND_MAX;          //First orientation is fully random
-		else theta = curvature*dl;// *rand()*dl / RAND_MAX;   //The rotation of the rest segment is curvature
-
+		if (i == 1)
+		{
+			//First orientation is fully random
+			double c_theta = 1.0*rand() / RAND_MAX;  
+			theta = acos(c_theta);
+		}
+		else
+		{
+			theta = curvature * dl;// *rand()*dl / RAND_MAX;   //The rotation of the rest segment is curvature
+		}
 		phy = 2 * pi*rand() / RAND_MAX;
 		vec3D z(sin(theta)*cos(phy), sin(theta)*sin(phy), cos(theta));
 		vec3D dx=z*dl;
