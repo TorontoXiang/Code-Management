@@ -258,7 +258,7 @@ void Create_straight_CNT_net(int num_CNT, double l_CNT,double lx, double ly, dou
 }
 void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double lx, double ly, double lz)
 {
-	double r = 0.335, d_vdw = 0.34, ratio = 3, E = 860, mu = 0.17;
+	double r = 0.335, d_vdw = 0.34, ratio = 1, E = 860, mu = 0.17;
 	vec3D x_min[3][3][3];
 	//Create the minimal coordinate of the 27 boxes
 	for (int i = 0; i < 3; i++)
@@ -276,6 +276,7 @@ void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double lx, do
 	vec3D p_begin;
 	srand((int)time(0));
 	bool is_survive;
+	double extension = l_CNT / n_divided;
 	while (num_input < num_CNT)
 	{
 		p_begin.value(lx*rand() / RAND_MAX, ly*rand() / RAND_MAX, lz*rand() / RAND_MAX);
