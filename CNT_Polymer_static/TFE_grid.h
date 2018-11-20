@@ -51,6 +51,7 @@ protected:
 	void detect_boundary_cells();
 	//Find the cells connect to node with boundary condition
 };
+class Tgrid_CNT;
 class Tgrid_Polymer : public Tgrid
 {
 public:
