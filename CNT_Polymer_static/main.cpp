@@ -7,10 +7,9 @@
 #include <omp.h>
 using namespace std;
 
-int main(int argc, char* argv[])
+int main()
 {
-	int num_thread = atoi(argv[1]);
-	omp_set_num_threads(num_thread);
+	omp_set_num_threads(16);
 	Tcomposite composite;
 	composite.Input();
 	double t_begin = GetTickCount();

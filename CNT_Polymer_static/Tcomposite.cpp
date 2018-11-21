@@ -26,20 +26,25 @@ void Tcomposite::CG_iteration()
 {
 	CG_iteration_initialization();
 	double diff = _grid_Polymer.calculate_diff();
-	if (diff<1e-12)
+	if (diff < 1e-12)
 	{
 		return;
 	}
 	int num_iteration = 0;
-	while (diff>1e-12)
+	cout << "The 0th iteration step with error = " << diff << endl;
+	while (diff > 1e-12)
 	{
 		Calculate_Fp();
 		_grid_Polymer.Calculate_Kp();
 		_grid_Polymer.CG_update();
 		num_iteration = num_iteration + 1;
 		diff = _grid_Polymer.calculate_diff();
-		cout << num_iteration<<" "<<diff << endl;
+		if (num_iteration % 1000 == 0)
+		{
+			cout << "The " << num_iteration << " iteration step with error = " << diff << endl;
+		}
 	}
+	cout << num_iteration << " steps are used to reach error = " << diff << endl;
 	return;
 }
 void Tcomposite::output_result()
@@ -55,12 +60,22 @@ void Tcomposite::output_result()
 		_CNT_list[i].output_tecplot(output);
 	}
 	//Output the external load
+	ofstream output_force;
+	output_force.open("Racting_force.k");
 	Calculate_reacting_force();
 	vec3D external_force1, external_force2;
 	external_force1 = _grid_Polymer.calculate_external_load("x_min");
 	external_force2 = _grid_Polymer.calculate_external_load("x_max");
-	cout << "External force at x_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
-	cout << "External force at x_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
+	output_force << "External force at x_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
+	output_force << "External force at x_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
+	external_force1 = _grid_Polymer.calculate_external_load("y_min");
+	external_force2 = _grid_Polymer.calculate_external_load("y_max");
+	output_force << "External force at y_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
+	output_force << "External force at y_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
+	external_force1 = _grid_Polymer.calculate_external_load("z_min");
+	external_force2 = _grid_Polymer.calculate_external_load("z_max");
+	output_force << "External force at z_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
+	output_force << "External force at z_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
 }
 void Tcomposite::CG_iteration_initialization()
 {
