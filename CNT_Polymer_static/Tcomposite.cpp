@@ -1,9 +1,10 @@
 #include "Tcomposite.h"
 void Tcomposite::Input()
 {
+	cout << "Input the polymer grid..." << endl;
 	_grid_Polymer.Input_Polymer();
 	_grid_Polymer.Calculate_stiffness_matrix();
-	cout << "Input CNT" << endl;
+	cout << "Input the CNT net..." << endl;
 	input_CNT_list();
 }
 void Tcomposite::Calculate_Fp()
