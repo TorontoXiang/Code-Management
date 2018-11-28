@@ -11,7 +11,7 @@ void Create_straight_CNT_net(int num_CNT,double l_CNT,double lx,double ly,double
 //lx,ly,lz - The length of the box
 //num_CNT - The number of the CNT put in the box
 //l_CNT - The length of the CNT
-void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double lx, double ly, double lz);
+void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double ratio, double lx, double ly, double lz);
 //Create a random wavy CNT net
 //lx,ly,lz - The length of the box
 //num_CNT - The number of the CNT put in the box

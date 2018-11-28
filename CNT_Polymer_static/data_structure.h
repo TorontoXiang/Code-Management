@@ -3,6 +3,11 @@
 #include <vector>
 #include <fstream>
 using namespace std;
+struct Saxis_load
+{
+	int direction;
+	double value;
+};
 struct Slocation_info
 {
 	int cell_id;        //The cell_id where a node locates

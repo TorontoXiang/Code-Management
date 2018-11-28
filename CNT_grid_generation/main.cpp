@@ -13,7 +13,8 @@ int main()
 	ifstream input;
 	input.open("CNT_grid_generation.k");
 	int type, num_CNT, n_divided;
-	input >> type >> num_CNT >> n_divided;
+	double ratio;
+	input >> type >> num_CNT >> n_divided >> ratio;
 	if (type==0)
 	{
 		//Create stragiht CNT net
@@ -22,7 +23,7 @@ int main()
 	else if (type==1)
 	{
 		//Create wavy CNT net
-		Create_wavy_CNT_net(num_CNT, 67, n_divided, 67, 67, 67);
+		Create_wavy_CNT_net(num_CNT, 67, n_divided, ratio, 67, 67, 67);
 	}
 	system("Pause");
 	return 0;
