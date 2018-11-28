@@ -6,6 +6,7 @@
 #include "TCNT_grid.h"
 #include "functions.h"
 #include <Windows.h>
+#include "CNT_net_generation.h"
 using namespace std;
 void create_sample_CNT();
 int main()

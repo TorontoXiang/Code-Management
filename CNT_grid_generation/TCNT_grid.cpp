@@ -158,12 +158,12 @@ void TCNT_grid::generate_CNT_grid(double r, double l, int m, int n)
 		_truncation_list[i].generate_truncation_grid(r, l, m, n);
 	}
 }
-void TCNT_grid::output_CNT_tecplot(ofstream& output)
+void TCNT_grid::output_CNT_tecplot(ofstream& output,int value)
 {
 	int nump = _num_node * _truncation_list[0]._nump;
 	int nume = (_num_node - 1)*_truncation_list[1]._nume;
 	output << "TITLE = \"Tecplot Grid\"" << endl;
-	output << "VARIABLES = \"X\",\"Y\",\"Z\"" << endl;
+	output << "VARIABLES = \"X\",\"Y\",\"Z\",\"V\"" << endl;
 	output << "ZONE F=FEPOINT,N=" << nump << "," << "E=" << nume << "," << "ET=BRICK" << endl;
 	int nump_each = _truncation_list[0]._nump;
 	int nume_each = _truncation_list[0]._nume;
@@ -173,7 +173,7 @@ void TCNT_grid::output_CNT_tecplot(ofstream& output)
 		for (int j = 0; j < nump_each; j++)
 		{
 			pos = _truncation_list[i]._node_list[j];
-			output << pos.x << " " << pos.y << " " << pos.z << endl;
+			output << pos.x << " " << pos.y << " " << pos.z << " "<<value<< endl;
 		}
 	}
 	for (int i = 0; i < _num_node - 1; i++)

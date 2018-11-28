@@ -4,6 +4,7 @@
 #include <vector>
 #include <fstream>
 #include "functions.h"
+#include "TCNT_grid.h"
 using namespace std;
 class Ttruncation
 {
@@ -30,7 +31,7 @@ public:
 	void generate_CNT_grid(double r, double l, int m, int n);
 	//r:radiu of CNT, l:inner square length
 	//m:rudial direction division, n:ring direction division
-	void output_CNT_tecplot(ofstream& output);
+	void output_CNT_tecplot(ofstream& output,int value=0);
 	void output_CNT_k_file(ofstream& output,double E,double mu);
 private:
 	int _num_node;

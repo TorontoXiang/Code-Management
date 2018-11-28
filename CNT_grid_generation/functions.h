@@ -6,35 +6,11 @@
 using namespace std;
 double min_dis(vec3D x1, vec3D x2, vec3D x3, vec3D x4);
 //Retrun the minimal distance of segment x1x2 and x3x4
-void Create_straight_CNT_net(int num_CNT,double l_CNT,double lx,double ly,double lz);
-//Create a random straight CNT net
-//lx,ly,lz - The length of the box
-//num_CNT - The number of the CNT put in the box
-//l_CNT - The length of the CNT
-void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double ratio, double lx, double ly, double lz);
-//Create a random wavy CNT net
-//lx,ly,lz - The length of the box
-//num_CNT - The number of the CNT put in the box
-//l_CNT - The length of the CNT
-//n_divided - The division of each CNT
-//ratio - control the curvature of the CNT
-//E,mu - The material property of the CNT
-void Generate_straight_CNT(vec3D p1, vec3D p2, int n_divided, double r, double l, int m, int n, ofstream& output_k, ofstream& output_tec, double E, double mu);
-//Generate a straight CNT grid and input file if the two endpoints are given
-//p1,p2 - The two endpoints
-//n_divided - The number of the division along the length
-//r,l - The radius and length of the CNT
-//m,n - The parameters for generating the truncation mesh
-//output_k,output_tec - The output of the CNT grid
-//E,mu - The material property of the CNT
-vector<vec3D> Generate_wavy_CNT(vec3D p_begin, double ratio, int n_divided, double l);
+vector<vec3D> Generate_wavy_CNT(vec3D p_begin, double ratio, int n_divided, double l,int direction=0);
 //p_begin - The start point of the CNT
 //ratio - The parameter for controlling the curvature
 //n_divided - The number of the division along the length
-//r,l - The radius and length of the CNT
-//m,n - The parameters for generating the truncation mesh
-//output_k,output_tec - The output of the CNT grid
-//E,mu - The material property of the CNT
+//l - The radius and length of the CNT
 void T_matrix(vec3D z, double(&T)[3][3]);
 //Calculate the Transformation matrix between two coordinate system 1 and 2 such that x1=Tx2
 //z - z is the z-axis in system 2 and its coordinate in system 1
