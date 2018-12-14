@@ -10,21 +10,21 @@ class Tsubstrate
 {
 public:
 	Tsubstrate(){};
-	Tsubstrate(double lx, double ly, double r_NW, double r_P, double l_NW,int num_NW, double curvature, int n_divide);
+	Tsubstrate(double lx, double ly, double r_NW, double r_P, double l_NW,double density, double curvature, int n_divide);
 	//Generate a substrate with wavy nanowires
 	//lx,ly - the size of the substrate
 	//r_NW,r_P - the raduis of nanowire and the pattern
 	//curvature - the curvature of the nanowire
 	//n_divide - the number of segment in each nanowire
-	Tsubstrate(double lx, double ly, double r_NW, double r_P, double l_NW, int num_NW, double theta_max);
+	Tsubstrate(double lx, double ly, double r_NW, double r_P, double l_NW, double density, double theta_max);
 	//Generate a substrate with straight nanowires
 	//lx,ly - the size of the substrate
 	//r_NW,r_P - the raduis of nanowire and the pattern
 	//theta_max - the orientation of each nanowire
 
-	void generate_coupled_straight_substrate(double theta_max,Tsubstrate &coupled_substrate,bool &is_successed);
+	void generate_coupled_straight_substrate(double lx, double ly, double r_NW, double r_P, double l_NW, double density, double theta_max,Tsubstrate &coupled_substrate,bool &is_successed);
 	//Generate a coupled substrate with straight NW
-	void generate_coupled_wavy_substrate(double curvature, Tsubstrate &coupled_substrate, bool &is_successed);
+	void generate_coupled_wavy_substrate(double lx, double ly, double r_NW, double r_P, double l_NW, double density, double curvature, int n_divide, Tsubstrate &coupled_substrate, bool &is_successed);
 	//Generate a coupled substrate with wavy NW
 	//Generate a coupled substrate with straight NW
 	void output_substrate(ofstream &output_tec,int value);
@@ -37,6 +37,7 @@ private:
 	double _r_NW,_l_NW;
 	double _r_P;
 	int _num_NW, _n_divide;
+	double _density;
 
 	bool is_root_valid(vec3D x0);
 	//Determine whether the root of a new NW is valid (not inside the pattern region)

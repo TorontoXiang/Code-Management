@@ -21,6 +21,6 @@ int main()
 	int second = total_seconds - 3600 * hour - 60 * min;
 	cout << "Time consuming is " << hour << " hours " << min << " mins " << second << " seconds" << endl;
 	composite.output_result();
-	//system("Pause");
+	system("Pause");
 	return 0;
 }

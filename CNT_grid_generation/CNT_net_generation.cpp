@@ -1,7 +1,7 @@
 #include "CNT_net_generation.h"
 void Create_straight_CNT_net(int num_CNT, double l_CNT, double lx, double ly, double lz)
 {
-	double r = 0.335, d_vdw = 0.34;
+	double r = 1.34, d_vdw = 0;
 	vec3D x_min[3][3][3];
 	//Create the minimal coordinate of the 27 boxes
 	for (int i = 0; i < 3; i++)
