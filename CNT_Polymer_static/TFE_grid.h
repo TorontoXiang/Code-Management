@@ -17,6 +17,7 @@ public:
 	void Output_Tecplot(string file_name,int mid=-1);
 	//Calculate the stress and output;
 	int G_nume() { return _nume; };
+	int G_nump() { return _nump; };
 protected:
 	vector<Snode> _node_list;
 	vector<Tcell> _cell_list;

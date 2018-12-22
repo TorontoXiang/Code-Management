@@ -151,15 +151,17 @@ void Tcomposite::input_CNT_list()
 	}
 	_num_CNT = keyword_list.size();
 	_CNT_list.resize(_num_CNT);
-	int num_CNT_element = 0;
+	int num_CNT_element = 0,num_CNT_node = 0;
 	for (int i = 0; i < _num_CNT; i++)
 	{
 		_CNT_list[i].Input_CNT(keyword_list[i]);
 		_CNT_list[i].Create_MKL_solver();
 		_CNT_list[i].calculate_CNT_location(&_grid_Polymer);
 		num_CNT_element = num_CNT_element + _CNT_list[i].G_nume();
+		num_CNT_node = num_CNT_node + _CNT_list[i].G_nump();
 	}
 	cout << "Number of CNT element is: " << num_CNT_element << endl;
+	cout << "Number of CNT node is: " << num_CNT_node << endl;
 	return;
 }
 void Tcomposite::Calculate_reacting_force()
