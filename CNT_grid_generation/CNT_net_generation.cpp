@@ -183,15 +183,25 @@ void Create_straight_CNT_net(int num_CNT, double l_CNT, double lx, double ly, do
 	cout << "The total length is: " << total_length << endl;
 
 	//Output the CNT grid
-	ofstream output_k, output_tec;
+	int m = 1, n = 2;
+	ofstream output_k, output_tec,output_bc;
 	output_k.open("CNT_grid.k");
 	output_tec.open("CNT_grid.dat");
+	output_bc.open("CNT_bc.dat");
+	output_bc << CNT_list1.size() << " " << m << " " << n << endl;
 	double size_l = 0.67 * 3;
+	int index[12];
 	for (int i = 0; i < CNT_list1.size(); i++)
 	{
 		double l = (CNT_list1[i] - CNT_list2[i]).get_length();
 		int n_divided = int(l / size_l) + 2;
-		Generate_straight_CNT(CNT_list1[i], CNT_list2[i], n_divided, 0.335, 0.335*0.6, 1, 2, output_k, output_tec, 860, 0.17);
+		Generate_straight_CNT(CNT_list1[i], CNT_list2[i], n_divided, 0.335, 0.335*0.6, m, n, output_k, output_tec, 860, 0.17);
+		identify_straight_CNT_at_boundary(CNT_list1[i], CNT_list2[i], index, lx, ly, lz);
+		for (int i = 0; i < 12; i++)
+		{
+			output_bc << index[i] << " ";
+		}
+		output_bc << endl;
 	}
 	output_k << "*END" << endl;
 }

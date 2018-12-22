@@ -164,7 +164,7 @@ void TCNT_grid::output_CNT_tecplot(ofstream& output,int value)
 	int nume = (_num_node - 1)*_truncation_list[1]._nume;
 	output << "TITLE = \"Tecplot Grid\"" << endl;
 	output << "VARIABLES = \"X\",\"Y\",\"Z\",\"V\"" << endl;
-	output << "ZONE F=FEPOINT,N=" << nump << "," << "E=" << nume << "," << "ET=BRICK" << endl;
+	output << "ZONE F=FEPOINT,N= " << nump << " ," << "E= " << nume << " ," << "ET=BRICK" << endl;
 	int nump_each = _truncation_list[0]._nump;
 	int nume_each = _truncation_list[0]._nume;
 	for (int i = 0; i < _num_node; i++)

@@ -11,6 +11,22 @@ using namespace std;
 void create_sample_CNT();
 int main()
 {
+	//double r1, r2;
+	//vec3D p1(78.314218338546411, 69.130193159469130, 80.760595164779161);
+	//vec3D p2(36.222923029098986, 34.726814916524965, 119.92350134511798);
+	//vec3D p3(6.2790739307357146, 122.72091788022473, 64.981533767145748);
+	//vec3D p4(19.481940098969059, 117.65977187026066, 130.47254331420984);
+	//vector<vec3D> curve1, curve2;
+	//for (int i = 0; i < 36; i++)
+	//{
+	//	curve1.push_back(p1 + (p2 - p1)*i / 35.0);
+	//	curve2.push_back(p3 + (p4 - p3)*i / 35.0);
+	//}
+	//Selectrical_node node1, node2;
+	//cout << min_curve_dis(curve1, curve2, node1, node2) << endl;
+	//cout << min_dis(p1, p2, p3, p4) << endl;
+	//cout << min_dis(p1, p2, p3, p4, r1, r2)<<" ";
+	//cout << r1 << " " << r2 << endl;
 	ifstream input;
 	input.open("CNT_grid_generation.k");
 	int type, num_CNT, n_divided;

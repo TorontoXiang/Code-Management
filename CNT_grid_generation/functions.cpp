@@ -1,4 +1,5 @@
 #include "functions.h"
+#include <algorithm>
 double min_dis(vec3D x1, vec3D x2, vec3D x3, vec3D x4)
 {
 	vec3D p = x1 - x3, n1 = x2 - x1, n3 = x4 - x3;
@@ -57,6 +58,76 @@ double min_dis(vec3D x1, vec3D x2, vec3D x3, vec3D x4)
 			else t = 0, s = 1;
 		}
 	}
+	return sqrt(pp + 2 * n1p*t - 2 * n3p*s - 2 * n1n3*s*t + n1n1 * t*t + n3n3 * s*s);;
+}
+double min_dis(vec3D x1, vec3D x2, vec3D x3, vec3D x4, double &ratio1, double &ratio2)
+{
+	vec3D p = x1 - x3, n1 = x2 - x1, n3 = x4 - x3;
+	double n1n1 = n1 * n1, n3n3 = n3 * n3, n1n3 = n1 * n3, n1p = n1 * p, n3p = n3 * p, pp = p * p;
+	double delta = n1n1 * n3n3 - n1n3 * n1n3;
+	double t, s;
+	if (delta > 1e-15)
+	{
+		//n1 and n3 are not parallel
+		t = (n1n3*n3p - n3n3 * n1p) / delta;
+		s = (n3p + n1n3 * t) / n3n3;
+		if (t >= 0 && t <= 1 && s >= 0 && s <= 1)
+		{
+			ratio1 = t; ratio2 = s;
+			return sqrt(pp + 2 * n1p*t - 2 * n3p*s - 2 * n1n3*s*t + n1n1 * t*t + n3n3 * s*s);
+		}
+		else
+		{
+			vector<double> d;
+			double t[4], s[4];
+			d.resize(4);
+			//minimal distance from x1 to x3x4
+			t[0] = 0;
+			s[0] = (x1 - x3)*n3 / n3n3;
+			if (s[0] < 0) s[0] = 0;
+			else if (s[0] > 1) s[0] = 1;
+			d[0] = (x3 - x1 + (x4 - x3)*s[0]).self_multuply();
+			//minimal distance from x2 to x3x4
+			t[1] = 1;
+			s[1] = (x2 - x3)*n3 / n3n3;
+			if (s[1] < 0) s[1] = 0;
+			else if (s[1] > 1) s[1] = 1;
+			d[1] = (x3 - x2 + (x4 - x3)*s[1]).self_multuply();
+			//minimal distance from x3 to x1x2
+			s[2] = 0;
+			t[2] = (x3 - x1)*n1 / n1n1;
+			if (t[2] < 0) t[2] = 0;
+			else if (t[2] > 1) t[2] = 1;
+			d[2] = (x1 - x3 + (x2 - x1)*t[2]).self_multuply();
+			//minimal distance from x4 to x1x2
+			s[3] = 1;
+			t[3] = (x4 - x1)*n1 / n1n1;
+			if (t[3] < 0) t[3] = 0;
+			else if (t[3] > 1) t[3] = 1;
+			d[3] = (x1 - x4 + (x2 - x1)*t[3]).self_multuply();
+			int min_pos = (int)(std::min_element(d.begin(), d.end()) - d.begin());
+			ratio1 = t[min_pos]; ratio2 = s[min_pos];
+			return sqrt(d[min_pos]);
+		}
+	}
+	else
+	{
+		//n1 and n3 are parallel
+		double v1 = -n3p, v2 = -n1n3 - n3p, v3 = n3n3 - n1n3 - n3p, v4 = n3n3 - n3p;
+		if (v1*v2 <= 0) s = 0, t = -n3p / n1n3;
+		else if (v2*v3 <= 0) t = 1, s = (n1n3 + n3p) / n3n3;
+		else if (v3*v4 <= 0) s = 1, t = (n3n3 - n3p) / n1n3;
+		else if (v4*v1 <= 0) t = 0, s = n3p / n3n3;
+		else
+		{
+			double min_d = minval(minval(abs(v1), abs(v2)), minval(abs(v3), abs(v4)));
+			if (min_d == abs(v1)) t = 0, s = 0;
+			else if (min_d == abs(v2)) t = 1, s = 0;
+			else if (min_d == abs(v3)) t = 1, s = 1;
+			else t = 0, s = 1;
+		}
+	}
+	ratio1 = t; ratio2 = s;
 	return sqrt(pp + 2 * n1p*t - 2 * n3p*s - 2 * n1n3*s*t + n1n1 * t*t + n3n3 * s*s);;
 }
 vector<vec3D> Generate_wavy_CNT(vec3D p_begin, double ratio, int n_divided, double l,int direction)
@@ -258,6 +329,26 @@ double min_curve_dis(vector<vec3D> &curve1, vector<vec3D> &curve2)
 	}
 	return dis_min;
 }
+double min_curve_dis(vector<vec3D> &curve1, vector<vec3D> &curve2, Selectrical_node &node1, Selectrical_node &node2)
+{
+	double dis_min = 1e20;
+	double dis;
+	double ratio1, ratio2;
+	for (int i = 0; i < curve1.size() - 1; i++)
+	{
+		for (int j = 0; j < curve2.size() - 1; j++)
+		{
+			dis = min_dis(curve1[i], curve1[i + 1], curve2[j], curve2[j + 1], ratio1, ratio2);
+			if (dis<dis_min)
+			{
+				dis_min = dis;
+				node1.Segment_ID = i; node1.ratio = ratio1;
+				node2.Segment_ID = j; node2.ratio = ratio2;
+			}
+		}
+	}
+	return dis_min;
+}
 void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curve_list, vec3D x_min, vec3D x_max)
 {
 	vector<int> index_start, index_end;
@@ -300,5 +391,26 @@ void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curv
 			effective_curve_list[i].push_back(curve[j]);
 		}
 	}
+	return;
+}
+void identify_straight_CNT_at_boundary(vec3D p1, vec3D p2, int(&index)[12], double lx, double ly, double lz)
+{
+	double eps = 1e-10;
+	for (int i = 0; i < 12; i++)
+	{
+		index[i] = 0;
+	}
+	if (abs(p1.x) < eps) index[0] = 1;
+	if (abs(p1.x-lx) < eps) index[1] = 1;
+	if (abs(p1.y) < eps) index[2] = 1;
+	if (abs(p1.y - ly) < eps) index[3] = 1;
+	if (abs(p1.z) < eps) index[4] = 1;
+	if (abs(p1.z - lz) < eps) index[5] = 1;
+	if (abs(p2.x) < eps) index[6] = 1;
+	if (abs(p2.x - lx) < eps) index[7] = 1;
+	if (abs(p2.y) < eps) index[8] = 1;
+	if (abs(p2.y - ly) < eps) index[9] = 1;
+	if (abs(p2.z) < eps) index[10] = 1;
+	if (abs(p2.z - lz) < eps) index[11] = 1;
 	return;
 }

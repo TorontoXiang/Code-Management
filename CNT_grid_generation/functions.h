@@ -4,8 +4,21 @@
 #include <time.h>
 #include <iostream>
 using namespace std;
+struct Selectrical_node
+{
+	int CNT_ID;
+	int Segment_ID;
+	double ratio;
+	int Electric_node_ID;
+
+	bool operator ==(Selectrical_node const &other) { return (Segment_ID + ratio == other.Segment_ID + other.ratio); };
+	bool operator <(Selectrical_node const &other) { return (Segment_ID + ratio < other.Segment_ID + other.ratio); };
+	bool operator >(Selectrical_node const &other) { return (Segment_ID + ratio > other.Segment_ID + other.ratio); };
+};
 double min_dis(vec3D x1, vec3D x2, vec3D x3, vec3D x4);
 //Retrun the minimal distance of segment x1x2 and x3x4
+double min_dis(vec3D x1, vec3D x2, vec3D x3, vec3D x4, double &ratio1, double &ratio2);
+//Retrun the minimal distance of segment x1x2 and x3x4 and the information of the two related points
 vector<vec3D> Generate_wavy_CNT(vec3D p_begin, double ratio, int n_divided, double l,int direction=0);
 //p_begin - The start point of the CNT
 //ratio - The parameter for controlling the curvature
@@ -28,5 +41,9 @@ void move_curve(vector<vec3D> &curve, vec3D motion);
 //Move a curve by motion
 double min_curve_dis(vector<vec3D> &curve1, vector<vec3D> &curve2);
 //Calculate the minimal distance of two curve
+double min_curve_dis(vector<vec3D> &curve1, vector<vec3D> &curve2, Selectrical_node &node1, Selectrical_node &node2);
+//Calcualte the minimal distance of two curve and return the information of the two related points
 void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curve_list, vec3D x_min, vec3D x_max);
 //Get the effective curve in a box
+void identify_straight_CNT_at_boundary(vec3D p1, vec3D p2, int(&index)[12],double lx,double ly,double lz);
+//Identify whether the endpoint of a straight CNT is located at the boundary
