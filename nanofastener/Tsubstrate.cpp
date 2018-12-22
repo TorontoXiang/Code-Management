@@ -1,50 +1,55 @@
 #include "Tsubstrate.h"
-Tsubstrate::Tsubstrate(double lx, double ly, double r_NW, double r_P, double l_NW, int num_NW, double theta_max)
+Tsubstrate::Tsubstrate(double lx, double ly, double r_NW, double r_P, double l_NW, double density, double theta_max)
 {
-	_lx = lx; _ly = ly; _r_NW = r_NW; _r_P = r_P; _num_NW = num_NW; _l_NW = l_NW;
-	cout << "Create a substrate with straight NW" << endl;
+	double pi = 3.141592653;
+	_lx = lx; _ly = ly; _r_NW = r_NW; _r_P = r_P;  _l_NW = l_NW; _density = density;
+	_num_NW = lx*ly*density/(pi*r_NW*r_NW);
+	//cout << "Create a substrate with straight NW" << endl;
 	int num_input = 0;
-	while (num_input < num_NW)
+	while (num_input < _num_NW)
 	{
 		vector<vec3D> new_NW = generate_valid_straight_NW(0, 1, theta_max);
 		_NW_list.push_back(new_NW);
 		_root_list.push_back(new_NW[0]);
 		num_input = num_input + 1;
-		cout << num_input << endl;
+		//cout << num_input << endl;
 	}
-	cout << "Finish the substrate generation" << endl;
+	//cout << "Finish the substrate generation" << endl;
 }
-Tsubstrate::Tsubstrate(double lx, double ly, double r_NW, double r_P, double l_NW, int num_NW, double curvature, int n_divide)
+Tsubstrate::Tsubstrate(double lx, double ly, double r_NW, double r_P, double l_NW, double density, double curvature, int n_divide)
 {
-	_lx = lx; _ly = ly; _r_NW = r_NW; _r_P = r_P; _num_NW = num_NW; _n_divide = n_divide; _l_NW = l_NW;
-	cout << "Create a substrate with wavy NW" << endl;
 	double pi = 3.141592653;
+	_lx = lx; _ly = ly; _r_NW = r_NW; _r_P = r_P;  _n_divide = n_divide; _l_NW = l_NW; _density = density;
+	_num_NW = lx * ly*density / (pi*r_NW*r_NW);
+	//cout << "Create a substrate with wavy NW" << endl;
 	int num_input = 0;
 	vec3D x0, dx;
 	double phy;
 	bool is_survive;
-	while (num_input < num_NW)
+	while (num_input < _num_NW)
 	{
 		vector<vec3D> new_NW = generate_valid_wavy_NW(0, 1, curvature,n_divide);
 		_NW_list.push_back(new_NW);
 		_root_list.push_back(new_NW[0]);
 		num_input = num_input + 1;
-		cout << num_input << endl;
+		//cout << num_input << endl;
 	}
-	cout << "Finish the substrate generation" << endl;
+	//cout << "Finish the substrate generation" << endl;
 }
-void Tsubstrate::generate_coupled_straight_substrate(double theta_max, Tsubstrate &coupled_substrate, bool &is_successed)
+void Tsubstrate::generate_coupled_straight_substrate(double lx, double ly, double r_NW, double r_P, double l_NW, double density, double theta_max, Tsubstrate &coupled_substrate, bool &is_successed)
 {
+	double pi = 3.141592653;
 	int num_trial=0;
-	coupled_substrate._lx = _lx; coupled_substrate._ly = _ly;
-	coupled_substrate._l_NW = _l_NW; coupled_substrate._num_NW = _num_NW;
-	coupled_substrate._r_NW = _r_NW; coupled_substrate._r_P = _r_P;
+	coupled_substrate._lx = lx; coupled_substrate._ly = ly;
+	coupled_substrate._l_NW = l_NW; coupled_substrate._num_NW = lx * ly*density / (pi*r_NW*r_NW);
+	coupled_substrate._r_NW = r_NW; coupled_substrate._r_P = r_P;
+	coupled_substrate._density = density;
 	int num_input = 0;
 	vec3D x0, dx;
 	double z = max_z();
 	bool is_survive;
 	is_successed = false;
-	while (num_input<_num_NW)
+	while (num_input<coupled_substrate._num_NW)
 	{
 		vector<vec3D> new_NW = coupled_substrate.generate_valid_straight_NW(z, -1, theta_max);
 		num_trial = num_trial + 1;
@@ -68,25 +73,26 @@ void Tsubstrate::generate_coupled_straight_substrate(double theta_max, Tsubstrat
 			coupled_substrate._NW_list.push_back(new_NW);
 			coupled_substrate._root_list.push_back(new_NW[0]);
 			num_input = num_input + 1;
-			cout << num_input << " " << num_trial << endl;
+			//cout << num_input << " " << num_trial << endl;
 			num_trial = 0;
 		}
 	}
 	is_successed = true;
 }
-void Tsubstrate::generate_coupled_wavy_substrate(double curvature, Tsubstrate &coupled_substrate, bool &is_successed)
+void Tsubstrate::generate_coupled_wavy_substrate(double lx, double ly, double r_NW, double r_P, double l_NW, double density, double curvature, int n_divide, Tsubstrate &coupled_substrate, bool &is_successed)
 {
+	double pi = 3.141592653;
 	int num_trial = 0;
-	coupled_substrate._lx = _lx; coupled_substrate._ly = _ly;
-	coupled_substrate._l_NW = _l_NW; coupled_substrate._num_NW = _num_NW;
-	coupled_substrate._r_NW = _r_NW; coupled_substrate._r_P = _r_P;
+	coupled_substrate._lx = lx; coupled_substrate._ly = ly;
+	coupled_substrate._l_NW = l_NW; coupled_substrate._num_NW = lx * ly*density / (pi*r_NW*r_NW);
+	coupled_substrate._r_NW = r_NW; coupled_substrate._r_P = r_P;
 	coupled_substrate._n_divide = _n_divide;
 	int num_input = 0;
 	vec3D x0, dx;
 	double z = max_z();
 	bool is_survive;
 	is_successed = false;
-	while (num_input < _num_NW)
+	while (num_input < coupled_substrate._num_NW)
 	{
 		vector<vec3D> new_NW = coupled_substrate.generate_valid_wavy_NW(z, -1,curvature,coupled_substrate._n_divide);
 		num_trial = num_trial + 1;
@@ -110,7 +116,7 @@ void Tsubstrate::generate_coupled_wavy_substrate(double curvature, Tsubstrate &c
 			coupled_substrate._NW_list.push_back(new_NW);
 			coupled_substrate._root_list.push_back(new_NW[0]);
 			num_input = num_input + 1;
-			cout << num_input << " " << num_trial << endl;
+			//cout << num_input << " " << num_trial << endl;
 			num_trial = 0;
 		}
 	}
@@ -157,7 +163,7 @@ vector<vec3D> Tsubstrate::generate_valid_straight_NW(double z, int direction, do
 	//srand((int)time(0));
 	while (true)
 	{
-		x0.value(_lx*rand() / RAND_MAX, _ly*rand() / RAND_MAX, z);
+		x0.value(_lx*(1.0*rand() / RAND_MAX-0.5), _ly*(1.0*rand() / RAND_MAX-0.5), z);
 		if (is_root_valid(x0))
 		{
 			phy = 2 * pi*rand() / RAND_MAX;
@@ -198,7 +204,7 @@ vector<vec3D> Tsubstrate::generate_valid_wavy_NW(double z, int direction, double
 	//srand((int)time(0));
 	while (true)
 	{
-		x0.value(_lx*rand() / RAND_MAX, _ly*rand() / RAND_MAX, z);
+		x0.value(_lx*(1.0*rand() / RAND_MAX-0.5), _ly*(1.0*rand() / RAND_MAX-0.5), z);
 		if (is_root_valid(x0))
 		{
 			vector<vec3D> new_NW = Generate_wavy_CNT(x0, curvature, n_divide, _l_NW, direction);
