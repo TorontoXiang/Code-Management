@@ -3,6 +3,17 @@
 #include "mkl_pardiso.h"
 #include "mkl_types.h"
 using namespace std;
+int maxval(int a, int b)
+{
+	if (a >= b)
+	{
+		return a;
+	}
+	else
+	{
+		return b;
+	}
+};
 double Snode::Calculate_diagonal_element()
 {
 	double r = 0;
@@ -33,7 +44,7 @@ void TResisitance_net::input_resistance_net(ifstream &input)
 	for (int i = 0; i < num_resistance; i++)
 	{
 		input >> n1 >> n2 >> R;
-		n_max = _Max_value(n1, n2);
+		n_max = maxval(n1, n2);
 		if (n_max>=_node_list.size())
 		{
 			_node_list.resize(n_max+1);
@@ -45,6 +56,29 @@ void TResisitance_net::input_resistance_net(ifstream &input)
 	}
 	input >> _nv1 >> _nv2 >> _v;
 	_num_freedom = _num_node=_node_list.size();
+	return;
+}
+void TResisitance_net::input_resistance_net(vector<Sresistance> resistance_net)
+{
+	int num_resistance=resistance_net.size();
+	int n1, n2, n_max;
+	double R;
+	for (int i = 0; i < num_resistance; i++)
+	{
+		n1 = resistance_net[i].i; n2 = resistance_net[i].j;
+		R = resistance_net[i].R;
+		n_max = maxval(n1, n2);
+		if (n_max >= _node_list.size())
+		{
+			_node_list.resize(n_max + 1);
+		}
+		_node_list[n1]._connected_node.push_back(n2);
+		_node_list[n1]._connected_resistance.push_back(R);
+		_node_list[n2]._connected_node.push_back(n1);
+		_node_list[n2]._connected_resistance.push_back(R);
+	}
+	_nv1 = 1; _nv2 = 0; _v = 1;
+	_num_freedom = _num_node = _node_list.size();
 	return;
 }
 void TResisitance_net::Generate_Sparse_Matrix()

@@ -309,6 +309,10 @@ bool is_in_range(vec3D p1, vec3D p2,vec3D x_min, vec3D x_max)
 	}
 	return is_in;
 }
+int identify_segment_state(vec3D p1, vec3D p2, vec3D x_min, vec3D x_max)
+{
+
+}
 void move_curve(vector<vec3D> &curve, vec3D motion)
 {
 	for (int i = 0; i < curve.size(); i++)
@@ -393,9 +397,26 @@ void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curv
 	}
 	return;
 }
-void identify_straight_CNT_at_boundary(vec3D p1, vec3D p2, int(&index)[12], double lx, double ly, double lz)
+void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curve_list, vector<vector<int>> &bc_Info, vec3D x_min, vec3D x_max)
+{
+	vector<link_node> node_list;
+	vector<link_node*> head_list;
+	for (int i = 0; i < curve.size(); i++)
+	{
+		link_node new_node(curve[i]);
+		node_list.push_back(new_node);
+	}
+	for (int i = 0; i < curve.size()-1; i++)
+	{
+		node_list[i].next_node = &node_list[i + 1];
+	}
+	link_node* new_head = &node_list[0];
+	head_list.push_back(new_head);
+}
+void identify_straight_CNT_at_boundary(vec3D p1, vec3D p2, vector<int> &index, double lx, double ly, double lz)
 {
 	double eps = 1e-10;
+	index.resize(12);
 	for (int i = 0; i < 12; i++)
 	{
 		index[i] = 0;

@@ -1,35 +1,6 @@
 #include "data_structure.h"
 #include <iostream>
 using namespace std;
-void Snode::calculate_location(double(&x_min)[3], double(&x_max)[3], double(&interval)[3], int nx_max, int ny_max, int nz_max)
-{
-	if (_is_surface)
-	{
-		if (_pos[0]<x_min[0] || _pos[1] < x_min[1] || _pos[2] < x_min[2] || _pos[0] > x_max[0] || _pos[1] > x_max[1] || _pos[2] > x_max[2])
-		{
-			cout << _pos[0] << " " << _pos[1] << " " << _pos[2] << endl;
-			cout << "CNT node is out of the polymer" << endl;
-			system("Pause");
-			//return;
-			//exit(0);
-		}
-		_location = new Slocation_info;
-		double delta[3];
-		delta[0] = _pos[0] - x_min[0]; delta[1] = _pos[1] - x_min[1]; delta[2] = _pos[2] - x_min[2];
-		int nx = (int)floor(delta[0] / interval[0]);
-		int ny = (int)floor(delta[1] / interval[1]);
-		int nz = (int)floor(delta[2] / interval[2]);
-		nx = minval(nx, nx_max - 1); ny = minval(ny, ny_max - 1); nz = minval(nz, nz_max - 1);
-		_location->cell_id= ny_max * nz_max*nx + nz_max * ny + nz;
-		double dx = _pos[0] - nx * interval[0];
-		_location->iso_coor[0] = -1 + 2 * dx / interval[0];
-		double dy = _pos[1] - ny * interval[1];
-		_location->iso_coor[1] = -1 + 2 * dy / interval[1];
-		double dz = _pos[2] - nz * interval[2];
-		_location->iso_coor[2] = -1 + 2 * dz / interval[2];
-	}
-	return;
-}
 vec3D::vec3D()
 {
 	x = y = z = 0;
@@ -243,4 +214,11 @@ int local_node_id(int i, int j, int k)
 	{
 		return 3 + 4 * k;
 	}
+}
+link_node::link_node(vec3D coor)
+{
+	pos = coor;
+	state = -3;
+	pre_node = NULL;
+	next_node = NULL;
 }

@@ -11,41 +11,26 @@ using namespace std;
 void create_sample_CNT();
 int main()
 {
-<<<<<<< HEAD
-	//double r1, r2;
-	//vec3D p1(78.314218338546411, 69.130193159469130, 80.760595164779161);
-	//vec3D p2(36.222923029098986, 34.726814916524965, 119.92350134511798);
-	//vec3D p3(6.2790739307357146, 122.72091788022473, 64.981533767145748);
-	//vec3D p4(19.481940098969059, 117.65977187026066, 130.47254331420984);
-	//vector<vec3D> curve1, curve2;
-	//for (int i = 0; i < 36; i++)
-	//{
-	//	curve1.push_back(p1 + (p2 - p1)*i / 35.0);
-	//	curve2.push_back(p3 + (p4 - p3)*i / 35.0);
-	//}
-	//Selectrical_node node1, node2;
-	//cout << min_curve_dis(curve1, curve2, node1, node2) << endl;
-	//cout << min_dis(p1, p2, p3, p4) << endl;
-	//cout << min_dis(p1, p2, p3, p4, r1, r2)<<" ";
-	//cout << r1 << " " << r2 << endl;
-=======
-	//create_sample_CNT();
-	//return 0;
->>>>>>> 9845fca6fed3347720f97efaed443beeec089468
 	ifstream input;
-	input.open("CNT_grid_generation.k");
-	int type, num_CNT, n_divided;
-	double ratio;
-	input >> type >> num_CNT >> n_divided >> ratio;
-	if (type==0)
+	input.open("RVE_Info.k");
+	//Create the CNT network
+	TCNT_net_generator CNT_net_generator;
+	CNT_net_generator.input_RVE_info(input);
+	vector<vector<vec3D>> CNT_net;
+	vector<vector<int>> bc_Info;
+	ofstream output_k, output_tec, output_bc;
+	output_k.open("CNT_grid.k"); output_tec.open("CNT_grid.dat"); output_bc.open("bc_Info.k");
+	if (CNT_net_generator._type==0)
 	{
 		//Create stragiht CNT net
-		Create_straight_CNT_net(num_CNT, 67, 67, 67, 67);
+		CNT_net_generator.Create_straight_CNT_net(CNT_net, bc_Info);
+		CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
+		//Create_straight_CNT_net(num_CNT, 67, 67, 67, 67);
 	}
-	else if (type==1)
+	else if (CNT_net_generator._type==1)
 	{
 		//Create wavy CNT net
-		Create_wavy_CNT_net(num_CNT, 67, n_divided, ratio, 67, 67, 67);
+		//Create_wavy_CNT_net(num_CNT, 67, n_divided, ratio, 67, 67, 67);
 	}
 	system("Pause");
 	return 0;

@@ -1,7 +1,11 @@
 #pragma once
 #include <vector>
 #include<fstream>
+#include<cmath>
+#include "TCNT_net.h"
 using namespace std;
+int maxval(int a, int b);
+struct Sresistance;
 struct Snode
 {
 	vector<int> _connected_node;
@@ -14,6 +18,7 @@ class TResisitance_net
 {
 public:
 	void input_resistance_net(ifstream &input);
+	void input_resistance_net(vector<Sresistance>);
 	//Input the resistance net
 	void Generate_Sparse_Matrix();
 	//Generate the sprase matrix of the resistance net
@@ -33,3 +38,4 @@ private:
 	//void Generate_Sparse_Matrix();
 	////Generate the sprase matrix of the resistance net
 };
+

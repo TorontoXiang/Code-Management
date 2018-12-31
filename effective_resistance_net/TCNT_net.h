@@ -5,6 +5,7 @@
 #include <vector>
 #include "data_structure.h"
 #include "functions.h"
+#include "TResistance_net.h"
 using namespace std;
 struct SCNT
 {
@@ -41,17 +42,20 @@ void calculate_moment(vec3D &p1, vec3D &p2, vec3D &p3, vec3D &p4, vec3D &moment,
 //Calculate the area and moment of a quadrilateral
 double triagnle_area(vec3D &p1, vec3D &p2, vec3D &p3);
 //Calculate the area of a triangle
+int identify_RVE_face(string face_name);
+//Identify the face number of a face_name
 class TCNT_net
 {
 public:
-	TCNT_net(double d_tunneling, int M, double r_CNT):_d_tunneling(d_tunneling), _M(M), _r_CNT(r_CNT) {};
+	TCNT_net(double dE, int M, double sigma_CNT):_dE(dE), _M(M), _sigma_CNT(sigma_CNT) {};
 
 	void input_CNT_net();
 	//Input the CNT net and the bc information
-	//void Create_resistance_net();
-	void Create_tunneling_resistance();
-	void Create_intrinsic_resistance();
-	void Intrinsic_resistance_on_CNT(int CNT_ID);
+	double Calculate_effective_resistance(string positive_face,string negative_face);
+	//positive_face,negative_face="x(y,z)_min" and "x(y,z)_max"
+	//positive_face: The RVE face connected to positive polar of the source
+	//negative_face: The RVE face connected to negative polar of the source
+	//is_open: Whether no positive or negative node in the RVE
 private:
 	vector<vector<vec3D>> _CNT_net;
 	vector<vector<int>> _bc_info;
@@ -59,11 +63,10 @@ private:
 	vector<Sresistance> _resistance_net;
 	int _num_CNT;
 	int _num_tunneling_R;
-	double _d_tunneling,_r_CNT;
+	double _dE,_sigma_CNT;
 	int _M;
 
-
-	//void Create_tunneling_resistance();
-	//void Create_intrinsic_resistance();
-	//void Intrinsic_resistance_on_CNT(int CNT_ID);
+	void Create_tunneling_resistance();
+	void Create_intrinsic_resistance();
+	void Intrinsic_resistance_on_CNT(int CNT_ID);
 };

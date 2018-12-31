@@ -7,7 +7,6 @@
 #include "readin.h"
 #include "TMKL_solver.h"
 #include <string>
-#include "readin.h"
 using namespace std;
 class Tgrid
 {

@@ -1,6 +1,4 @@
 #include "TFE_grid.h"
-#include "data_structure.h"
-#include "readin.h"
 #include <fstream>
 #include "Sparse_matrix.h"
 #include "Shape_function.h"
