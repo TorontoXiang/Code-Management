@@ -15,6 +15,9 @@ private:
 	Tgrid_Polymer _grid_Polymer;
 	int _num_CNT;
 	vector<Tgrid_CNT> _CNT_list;
+	double _strain_min, _strain_max;
+	int _strain_interval;
+	int _analysis_type;   //0-mechanical analysis;1-electro-mechanical analysis
 
 	void CG_iteration_initialization();
 	//Use _dis=0 as the initial value of the CG iteration to set _F0 and
@@ -25,6 +28,8 @@ private:
 	//Calculate the reacting froce
 	void input_CNT_list();
 	//Input the CNT grid
+	void Cout_analysis_type();
+	//Output the analysis type on the screen
 };
 #endif
 

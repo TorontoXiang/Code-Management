@@ -63,6 +63,9 @@ struct Skeyword
 	vector<Smaterial> material_list;
 	Sregular_grid regular_grid;
 	vector<Sregular_grid_bc> regular_bc_list;
+	double strain_min, strain_max;
+	int strain_interval;
+	int analysis_type;
 
 	void clear_keyword();
 };

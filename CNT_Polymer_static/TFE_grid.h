@@ -47,7 +47,7 @@ protected:
 
 	void calculate_ID();
 	//Calculate the ID vector and the freedom degree of the system
-	void calculate_cell_displacement(int cell_id,double(&d_cell)[8][3]);
+	void calculate_cell_displacement(int cell_id,double(&d_cell)[8][3],double ratio=1.0);
 	//Calculate the displacement of each cell
 	void detect_boundary_cells();
 	//Find the cells connect to node with boundary condition
@@ -117,7 +117,7 @@ public:
 	//Generate this CNT from keyword
 	void calculate_CNT_location(Tgrid_Polymer* grid_polymer);
 	//Calculate the location of the surface node the CNT grid
-	void calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer);
+	void calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer,double ratio=1.0);
 	//Calculate the boundary displacement of a CNT
 	void calculate_CNT_boundary_p(Tgrid_Polymer* grid_polymer);
 	//Calculate the boundary p a CNT in CG_iteration
