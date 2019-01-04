@@ -1,6 +1,7 @@
 #include "CNT_net_generation.h"
 #include "readin.h"
 #include <iomanip>
+#include <istream>
 #include <string>
 using namespace std;
 Slink_node::Slink_node(vec3D coor, int State)
@@ -232,6 +233,7 @@ void TCNT_net_generator::Create_straight_CNT_net(vector<vector<vec3D>> &CNT_net,
 	double phy, theta;
 	double pi = 3.141592654;
 	bool is_survive;
+	srand((int)time(0));
 	while (num_input < num_target)
 	{
 		dx.value(_lx*rand() / RAND_MAX, _ly*rand() / RAND_MAX, _lz*rand() / RAND_MAX);
@@ -540,7 +542,7 @@ void TCNT_net_generator::Create_wavy_CNT_net(vector<vector<vec3D>> &CNT_net, vec
 	int num_target = int(_lx * _ly*_lz*_volume_fraction / volume_CNT);
 	vector<vector<vec3D>> curve_list;
 	vec3D p_begin;
-	//srand((int)time(0));
+	srand((int)time(0));
 	bool is_survive;
 	while (num_input < num_target)
 	{

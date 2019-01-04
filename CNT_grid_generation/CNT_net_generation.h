@@ -14,7 +14,7 @@ struct Slink_node
 class TCNT_net_generator
 {
 public:
-	TCNT_net_generator() { srand((int)time(0)); };
+	TCNT_net_generator() { /*srand((int)time(0));*/ };
 
 	void input_RVE_info(ifstream &input);
 	//Input the RVE and CNT information

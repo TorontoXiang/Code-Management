@@ -41,19 +41,21 @@ int main()
 	//bc_Info[0][0] = 1; bc_Info[1][9] = 1;
 	//CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
 	//return 0;
-	if (CNT_net_generator.G_type()==0)
-	{
-		//Create stragiht CNT net
-		CNT_net_generator.Create_straight_CNT_net(CNT_net, bc_Info);
-		CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
-		//Create_straight_CNT_net(num_CNT, 67, 67, 67, 67);
-	}
-	else if (CNT_net_generator.G_type()==1)
-	{
-		//Create wavy CNT net
-		CNT_net_generator.Create_wavy_CNT_net(CNT_net, bc_Info);
-		CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
-	}
+	//if (CNT_net_generator.G_type()==0)
+	//{
+	//	//Create stragiht CNT net
+	//	CNT_net_generator.Create_straight_CNT_net(CNT_net, bc_Info);
+	//	CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
+	//	//Create_straight_CNT_net(num_CNT, 67, 67, 67, 67);
+	//}
+	//else if (CNT_net_generator.G_type()==1)
+	//{
+	//	//Create wavy CNT net
+	//	CNT_net_generator.Create_wavy_CNT_net(CNT_net, bc_Info);
+	//	CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
+	//}
+	CNT_net_generator.Create_CNT_net(CNT_net, bc_Info);
+	CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
 	system("Pause");
 	return 0;
 }

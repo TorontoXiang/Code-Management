@@ -25,7 +25,7 @@ int main()
 	{
 		double fraction = (j + 1)*0.0005;
 		CNT_net_generator.S_fraciton(fraction);
-		double R_total = 0;
+		double S_total = 0, S;
 		for (int i = 0; i < num_test; i++)
 		{
 			vector<vector<vec3D>> CNT_net;
@@ -34,12 +34,14 @@ int main()
 			TCNT_net effective_resistance_net(dE, M, sigma_CNT);
 			effective_resistance_net.input_CNT_net(CNT_net, bc_Info);
 			double R = effective_resistance_net.Calculate_effective_resistance("x_min", "x_max",1);
-			R_total = R_total + R;
+			S = lx / (ly*lz*abs(R));
+			//cout << i<<" "<<R << endl;
+			//output << i << " " << R << endl;
+			S_total = S_total + S;
 		}
-		double R_average = R_total / num_test;
-		double S = lx / (ly*lz*abs(R_average));
-		cout << fraction << " " << S << endl;
-		output << fraction << " " << S << endl;
+		double S_average = S_total / num_test;
+		cout << fraction << " " << S_average << endl;
+		//output << fraction << " " << S << endl;
 	}
 
 	system("Pause");
