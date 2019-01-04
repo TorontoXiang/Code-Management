@@ -52,7 +52,6 @@ double min_curve_dis(vector<vec3D> &curve1, vector<vec3D> &curve2);
 double min_curve_dis(vector<vec3D> &curve1, vector<vec3D> &curve2, Selectrical_node &node1, Selectrical_node &node2);
 //Calcualte the minimal distance of two curve and return the information of the two related points
 void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curve_list, vec3D x_min, vec3D x_max);
-void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curve_list, vector<vector<int>> &bc_Info, vec3D x_min, vec3D x_max);
 //Get the effective curve in a box
 
 void identify_straight_CNT_at_boundary(vec3D p1, vec3D p2, vector<int> &index,double lx,double ly,double lz);

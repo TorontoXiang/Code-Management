@@ -1,14 +1,6 @@
 #include "TCNT_net.h"
 #include <algorithm>
 #include <cmath>
-void new_line(ifstream& input)
-{
-	char a;
-	do
-	{
-		input.get(a);
-	} while (a != '\n');
-}
 vector<vec3D> SCNT::calculate_centroid_line()
 {
 	vector<vec3D> centroid_line;
@@ -50,7 +42,7 @@ void TCNT_net::input_CNT_net()
 	cout << "Input the CNT net..." << endl;
 	ifstream input_CNT_info, input_bc_info;
 	input_CNT_info.open("CNT_grid.dat");
-	input_bc_info.open("CNT_bc.dat");
+	input_bc_info.open("bc_Info.k");
 	int m, n;
 	input_bc_info >> _num_CNT >> m >> n;
 	_bc_info.resize(_num_CNT);
@@ -95,6 +87,18 @@ void TCNT_net::input_CNT_net()
 				break;
 			}
 		}
+	}
+	return;
+}
+void TCNT_net::input_CNT_net(vector<vector<vec3D>> &CNT_net, vector<vector<int>> bc_Info)
+{
+	_num_CNT = CNT_net.size();
+	_CNT_net.resize(_num_CNT);
+	_bc_info.resize(_num_CNT);
+	for (int i = 0; i < _num_CNT; i++)
+	{
+		_CNT_net[i] = CNT_net[i];
+		_bc_info[i] = bc_Info[i];
 	}
 	return;
 }
@@ -243,24 +247,24 @@ void TCNT_net::Intrinsic_resistance_on_CNT(int CNT_ID)
 	}
 	return;
 }
-double TCNT_net::Calculate_effective_resistance(string positive_face, string negative_face)
+double TCNT_net::Calculate_effective_resistance(string positive_face, string negative_face, int output_control)
 {
-	cout << "Create the effective resistance net" << endl;
+	if (output_control==0)
+	{
+		cout << "Create the effective resistance net" << endl;
+	}
 	Create_tunneling_resistance();
 	Create_intrinsic_resistance();
 	int positive_face_id = identify_RVE_face(positive_face);
 	int negative_face_id = identify_RVE_face(negative_face);
 	int num_positive_node=0, num_negative_node=0;
 	int num_electrical_node = 2 * _num_CNT + 2 * _num_tunneling_R;
-	int* Identify;
-	int* ID;
-	Identify = new int[num_electrical_node];
-	ID = new int[num_electrical_node];
+	vector<int> Identify(num_electrical_node);
+	vector<int> ID(num_electrical_node);
 	for (int i = 0; i < num_electrical_node; i++)
 	{
 		Identify[i] = 0;
 	}
-	Identify = new int[num_electrical_node];
 	for (int i = 0; i < _num_CNT; i++)
 	{
 		if (_bc_info[i][positive_face_id]==1)
@@ -310,11 +314,17 @@ double TCNT_net::Calculate_effective_resistance(string positive_face, string neg
 		_resistance_net[n].i = ID[_resistance_net[n].i];
 		_resistance_net[n].j = ID[_resistance_net[n].j];
 	}
-	cout << "Calcuate the effective resistance..." << endl;
+	if (output_control==0)
+	{
+		cout << "Calcuate the effective resistance..." << endl;
+	}
 	TResisitance_net Modified_Node_Analysis;
 	Modified_Node_Analysis.input_resistance_net(_resistance_net);
 	Modified_Node_Analysis.Generate_Sparse_Matrix();
 	double effective_R = Modified_Node_Analysis.Calculate_effective_resistance();
-	cout << "The effective resistance of the CNT net is: " << abs(effective_R) << endl;
+	if (output_control==0)
+	{
+		cout << "The effective resistance of the CNT net is: " << abs(effective_R) << endl;
+	}
 	return effective_R;
 }

@@ -83,16 +83,6 @@ struct vec3D
 	bool operator <(vec3D const &other);
 	bool operator >(vec3D const &other);
 };
-struct link_node
-{
-	link_node(vec3D coor);
-	//Create a new node
-
-	vec3D pos;
-	int state;
-	link_node* next_node;
-	link_node* pre_node;
-};
 void inverse(double a[][3], double &det, bool &degeneratre);
 //The inverse of a 3*3 matrix
 int local_node_id(int i, int j, int k);

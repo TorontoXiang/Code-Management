@@ -3,6 +3,13 @@
 #include <iomanip>
 #include <string>
 using namespace std;
+Slink_node::Slink_node(vec3D coor, int State)
+{
+	pos = coor;
+	state = State;
+	pre_node = NULL;
+	next_node = NULL;
+}
 void Create_straight_CNT_net(int num_CNT, double l_CNT, double lx, double ly, double lz)
 {
 	double r = 0.335, d_vdw = 0.34;
@@ -203,7 +210,7 @@ void Create_straight_CNT_net(int num_CNT, double l_CNT, double lx, double ly, do
 	}
 	output_k << "*END" << endl;
 }
-void TCNT_net_generator::Create_straight_CNT_net(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info)
+void TCNT_net_generator::Create_straight_CNT_net(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info,int output_control)
 {
 	vec3D x_min[3][3][3];
 	//Create the minimal coordinate of the 27 boxes
@@ -224,7 +231,6 @@ void TCNT_net_generator::Create_straight_CNT_net(vector<vector<vec3D>> &CNT_net,
 	vec3D dx, dl;
 	double phy, theta;
 	double pi = 3.141592654;
-	srand((int)time(0));
 	bool is_survive;
 	while (num_input < num_target)
 	{
@@ -270,16 +276,23 @@ void TCNT_net_generator::Create_straight_CNT_net(vector<vector<vec3D>> &CNT_net,
 			}
 			num_input = num_input + 1;
 			//cout << num_input << endl;
-			if (num_input==1)
+			if (output_control==0)
 			{
-				cout << setw(4) << 100 * num_input / num_target << "%";
-			}
-			else
-			{
-				cout << '\b' << '\b' << '\b' << '\b' << '\b';
-				cout << setw(4) << 100 * num_input / num_target << "%";
+				if (num_input==1)
+				{
+					cout << setw(4) << 100 * num_input / num_target << "%";
+				}
+				else
+				{
+					cout << '\b' << '\b' << '\b' << '\b' << '\b';
+					cout << setw(4) << 100 * num_input / num_target << "%";
+				}
 			}
 		}
+	}
+	if (output_control==0)
+	{
+		cout << endl;
 	}
 	vec3D x1, x2;
 	vector<vec3D> CNT_list1, CNT_list2;
@@ -508,7 +521,7 @@ void Create_wavy_CNT_net(int num_CNT, double l_CNT, int n_divided, double ratio,
 	}
 	output_k << "*END" << endl;
 }
-void TCNT_net_generator::Create_wavy_CNT_net(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info)
+void TCNT_net_generator::Create_wavy_CNT_net(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info,int output_control)
 {
 	vec3D x_min[3][3][3];
 	//Create the minimal coordinate of the 27 boxes
@@ -527,7 +540,7 @@ void TCNT_net_generator::Create_wavy_CNT_net(vector<vector<vec3D>> &CNT_net, vec
 	int num_target = int(_lx * _ly*_lz*_volume_fraction / volume_CNT);
 	vector<vector<vec3D>> curve_list;
 	vec3D p_begin;
-	srand((int)time(0));
+	//srand((int)time(0));
 	bool is_survive;
 	while (num_input < num_target)
 	{
@@ -570,51 +583,61 @@ void TCNT_net_generator::Create_wavy_CNT_net(vector<vector<vec3D>> &CNT_net, vec
 				}
 			}
 			num_input = num_input + 1;
-			cout << num_input << endl;
-		}
-	}
-	cout << "Calculate effective curve" << endl;
-	vec3D min(0, 0, 0), max(_lx, _ly, _lz);
-	//vector<vector<vec3D>> effective_curve_list;
-	//vector<vector<int>> bc_Info;
-	for (int i = 0; i < curve_list.size(); i++)
-	{
-		vector<vector<vec3D>> sub_curve;
-		effective_curve(curve_list[i], sub_curve, min, max);
-		for (int i = 0; i < sub_curve.size(); i++)
-		{
-			CNT_net.push_back(sub_curve[i]);
-		}
-	}
-	cout << "Distance check" << endl;
-	cout << "The number of effective curve is " << CNT_net.size() << endl;
-	for (int i = 0; i < CNT_net.size(); i++)
-	{
-		for (int j = i + 1; j < CNT_net.size(); j++)
-		{
-			double dis_mini = min_curve_dis(CNT_net[i], CNT_net[j]);
-			if (dis_mini < _d_CNT + _d_VDW)
+			//cout << num_input << endl;
+			if (output_control==0)
 			{
-				cout << "Minimal distance conflict!" << endl;
-				cout << i << " " << j << " " << dis_mini << endl;
+				if (num_input == 1)
+				{
+					cout << setw(4) << 100 * num_input / num_target << "%";
+				}
+				else
+				{
+					cout << '\b' << '\b' << '\b' << '\b' << '\b';
+					cout << setw(4) << 100 * num_input / num_target << "%";
+				}
 			}
 		}
 	}
-	//cout << "Output CNT net" << endl;
-	//ofstream output_tec, output_k;
-	//output_tec.open("CNT_grid.dat");
-	//output_k.open("CNT_grid.k");
-	//for (int i = 0; i < effective_curve_list.size(); i = i++)
+	if (output_control==0)
+	{
+		cout << endl;
+		cout << "Calculate effective curve" << endl;
+	}
+	for (int i = 0; i < curve_list.size(); i++)
+	{
+		vector<vector<vec3D>> sub_CNT;
+		vector<vector<int>> sub_bc_Info;
+		Clipping_curved_CNT(curve_list[i], sub_CNT, sub_bc_Info);
+		for (int j = 0; j < sub_CNT.size(); j++)
+		{
+			CNT_net.push_back(sub_CNT[j]);
+			bc_Info.push_back(sub_bc_Info[j]);
+		}
+	}
+	for (int i = 0; i < CNT_net.size(); i++)
+	{
+		if (CNT_net[i].size() == 2)
+		{
+			CNT_net[i].resize(3);
+			vec3D pos = (CNT_net[i][0] + CNT_net[i][1])*0.5;
+			CNT_net[i][2] = CNT_net[i][1];
+			CNT_net[i][1] = pos;
+		}
+	}
+	//cout << "Distance check" << endl;
+	//cout << "The number of effective curve is " << CNT_net.size() << endl;
+	//for (int i = 0; i < CNT_net.size(); i++)
 	//{
-	//	TCNT_grid CNT_grid(effective_curve_list[i]);
-	//	CNT_grid.generate_CNT_grid(r, r*0.6, 1, 2);
-	//	CNT_grid.output_CNT_tecplot(output_tec);
-	//	if (effective_curve_list[i].size() != 2)
+	//	for (int j = i + 1; j < CNT_net.size(); j++)
 	//	{
-	//		CNT_grid.output_CNT_k_file(output_k, E, mu);
+	//		double dis_mini = min_curve_dis(CNT_net[i], CNT_net[j]);
+	//		if (dis_mini < _d_CNT + _d_VDW)
+	//		{
+	//			cout << "Minimal distance conflict!" << endl;
+	//			cout << i << " " << j << " " << dis_mini << endl;
+	//		}
 	//	}
 	//}
-	//output_k << "*END" << endl;
 }
 void Generate_straight_CNT(vec3D p1, vec3D p2, int n_divided, double r, double l, int m, int n, ofstream& output_k, ofstream& output_tec, double E, double mu)
 {
@@ -632,7 +655,8 @@ void Generate_straight_CNT(vec3D p1, vec3D p2, int n_divided, double r, double l
 }
 void TCNT_net_generator::Generate_CNT_net_grid(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info, ofstream &output_k, ofstream &output_tec, ofstream &output_bc)
 {
-	output_bc << CNT_net.size() << endl;
+	output_bc << CNT_net.size() << " " << _m << " " << _n << endl;
+
 	for (int i = 0; i < CNT_net.size(); i = i++)
 	{
 		TCNT_grid CNT_grid(CNT_net[i]);
@@ -693,5 +717,178 @@ void TCNT_net_generator::input_RVE_info(ifstream &input)
 		{
 			return;
 		}
+	}
+}
+void TCNT_net_generator::Create_CNT_net(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info,int output_control)
+{
+	if (_type==0)
+	{
+		Create_straight_CNT_net(CNT_net,bc_Info,output_control);
+	}
+	else if (_type==1)
+	{
+		Create_wavy_CNT_net(CNT_net, bc_Info,output_control);
+	}
+	else
+	{
+		cout << "Error: Invalid CNT network type!!" << endl;
+	}
+	return;
+}
+void TCNT_net_generator::Clipping_curved_CNT(vector<vec3D> &curved_CNT, vector<vector<vec3D>> &sub_CNT, vector<vector<int>> &bc_info)
+{
+	int num_segment = curved_CNT.size() - 1;
+	vector<int> segment_state_list(num_segment);
+	for (int i = 0; i < num_segment; i++)
+	{
+		segment_state_list[i] = segment_state(curved_CNT[i], curved_CNT[i + 1]);
+	}
+	vector<int> segment_start, segment_end;
+	bool is_in = false;
+	for (int i = 0; i < num_segment; i++)
+	{
+		if (segment_state_list[i]==-1)
+		{
+			if (!is_in)
+			{
+				is_in = true;
+				segment_start.push_back(i);
+			}
+		}
+		else
+		{
+			if (is_in)
+			{
+				is_in = false;
+				segment_end.push_back(i-1);
+			}
+		}
+		if (i==num_segment-1 && is_in)
+		{
+			segment_end.push_back(num_segment-1);
+		}
+	}
+	if (segment_start.size() != segment_end.size())
+	{
+		cout << "Error in effective_curve: the size of index_start and index_end must be equal!" << endl;
+		system("Pause");
+		exit(0);
+	}
+	int num_sub_CNT = segment_start.size();
+	sub_CNT.resize(num_sub_CNT);
+	for (int i = 0; i < num_sub_CNT; i++)
+	{
+		vector<int> index(12);
+		for (int j = segment_start[i]; j <= segment_end[i]+1; j++)
+		{
+			sub_CNT[i].push_back(curved_CNT[j]);
+		}
+		int state_start, state_end;
+		if (segment_start[i]==0)
+		{
+			state_start = -1;
+		}
+		else
+		{
+			state_start = segment_state_list[segment_start[i]-1];
+			index[state_start] = 1;
+		}
+		if (segment_end[i]==num_segment-1)
+		{
+			state_end = -1;
+		}
+		else
+		{
+			state_end = segment_state_list[segment_end[i] + 1];
+			index[state_end + 6] = 1;
+		}
+		bc_info.push_back(index);
+	}
+	//vector<int> index_start, index_end;
+	//bool is_in = false;
+	//for (int i = 0; i < curve.size() - 1; i++)
+	//{
+	//	if (is_in_range(curve[i], curve[i + 1], x_min, x_max))
+	//	{
+	//		if (!is_in)
+	//		{
+	//			is_in = true;
+	//			index_start.push_back(i);
+	//		}
+	//	}
+	//	else
+	//	{
+	//		if (is_in)
+	//		{
+	//			is_in = false;
+	//			index_end.push_back(i);
+	//		}
+	//	}
+	//	if (i == curve.size() - 2 && is_in)
+	//	{
+	//		index_end.push_back(curve.size() - 1);
+	//	}
+	//}
+	//if (index_start.size() != index_end.size())
+	//{
+	//	cout << "Error in effective_curve: the size of index_start and index_end must be equal!" << endl;
+	//	system("Pause");
+	//	exit(0);
+	//}
+	//int num_effective_CNT = index_start.size();
+	//effective_curve_list.resize(num_effective_CNT);
+	//for (int i = 0; i < num_effective_CNT; i++)
+	//{
+	//	for (int j = index_start[i]; j <= index_end[i]; j++)
+	//	{
+	//		effective_curve_list[i].push_back(curve[j]);
+	//	}
+	//}
+	return;
+}
+int TCNT_net_generator::segment_state(vec3D p1, vec3D p2)
+{
+	bool is_p1_inside = is_inside_RVE(p1);
+	bool is_p2_inside = is_inside_RVE(p2);
+	if (is_p1_inside && is_p2_inside)
+	{
+		return -1;          //Segment is inside the RVE
+	}
+	else if (!is_p1_inside && !is_p2_inside)
+	{
+		return -2;          //Segment is outside the RVE
+	}
+	else if (is_p1_inside)
+	{
+		if (p2.x<=0) return 0;
+		else if (p2.y <= 0) return 1;
+		else if (p2.z <= 0) return 2;
+		else if (p2.x >= _lx) return 3;
+		else if (p2.y >= _ly) return 4;
+		else if (p2.z >= _lz) return 5;
+	}
+	else if (is_p2_inside)
+	{
+		if (p1.x <= 0) return 0;
+		else if (p1.y <= 0) return 1;
+		else if (p1.z <= 0) return 2;
+		else if (p1.x >= _lx) return 3;
+		else if (p1.y >= _ly) return 4;
+		else if (p1.z >= _lz) return 5;
+	}
+	cout << "Error in segment_state" << endl;
+	system("Pause");
+	exit(0);
+	return 0;
+}
+bool TCNT_net_generator::is_inside_RVE(vec3D p)
+{
+	if (p.x>0 && p.y>0 && p.z>0 && p.x<_lx && p.y<_ly && p.z<_lz)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }

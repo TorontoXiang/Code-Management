@@ -18,19 +18,41 @@ int main()
 	CNT_net_generator.input_RVE_info(input);
 	vector<vector<vec3D>> CNT_net;
 	vector<vector<int>> bc_Info;
+	//vector<vec3D> test_CNT;
+	//vec3D p1(10, 10, -10), p2(10, 10, 77), p3(30, 30, 77), p4(30, 30, -10), p5(50, 50, -10), p6(60, 60, 20);
+	//test_CNT.push_back(p1), test_CNT.push_back(p2);
+	//test_CNT.push_back(p3), test_CNT.push_back(p4);
+	//test_CNT.push_back(p5), test_CNT.push_back(p6);
+	//CNT_net_generator.Clipping_curved_CNT(test_CNT, CNT_net, bc_Info);
+	//return 0;
 	ofstream output_k, output_tec, output_bc;
 	output_k.open("CNT_grid.k"); output_tec.open("CNT_grid.dat"); output_bc.open("bc_Info.k");
-	if (CNT_net_generator._type==0)
+	//CNT_net.resize(2);
+	//bc_Info.resize(2);
+	//vec3D p1(0, 5, 10), p2(10, 5, 10), p3(0, 0, 11), p4(15, 15, 11);
+	//CNT_net[0].push_back(p1); CNT_net[0].push_back(p2);
+	//CNT_net[1].push_back(p3); CNT_net[1].push_back(p4);
+	//bc_Info.resize(2);
+	//bc_Info[0].resize(12); bc_Info[1].resize(12);
+	//for (int i = 0; i < 12; i++)
+	//{
+	//	bc_Info[0][i] = bc_Info[1][i] = 0;
+	//}
+	//bc_Info[0][0] = 1; bc_Info[1][9] = 1;
+	//CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
+	//return 0;
+	if (CNT_net_generator.G_type()==0)
 	{
 		//Create stragiht CNT net
 		CNT_net_generator.Create_straight_CNT_net(CNT_net, bc_Info);
 		CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
 		//Create_straight_CNT_net(num_CNT, 67, 67, 67, 67);
 	}
-	else if (CNT_net_generator._type==1)
+	else if (CNT_net_generator.G_type()==1)
 	{
 		//Create wavy CNT net
-		//Create_wavy_CNT_net(num_CNT, 67, n_divided, ratio, 67, 67, 67);
+		CNT_net_generator.Create_wavy_CNT_net(CNT_net, bc_Info);
+		CNT_net_generator.Generate_CNT_net_grid(CNT_net, bc_Info, output_k, output_tec, output_bc);
 	}
 	system("Pause");
 	return 0;

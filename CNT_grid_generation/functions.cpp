@@ -311,7 +311,7 @@ bool is_in_range(vec3D p1, vec3D p2,vec3D x_min, vec3D x_max)
 }
 int identify_segment_state(vec3D p1, vec3D p2, vec3D x_min, vec3D x_max)
 {
-
+	return 0;
 }
 void move_curve(vector<vec3D> &curve, vec3D motion)
 {
@@ -397,22 +397,6 @@ void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curv
 	}
 	return;
 }
-void effective_curve(vector<vec3D> &curve, vector<vector<vec3D>> &effective_curve_list, vector<vector<int>> &bc_Info, vec3D x_min, vec3D x_max)
-{
-	vector<link_node> node_list;
-	vector<link_node*> head_list;
-	for (int i = 0; i < curve.size(); i++)
-	{
-		link_node new_node(curve[i]);
-		node_list.push_back(new_node);
-	}
-	for (int i = 0; i < curve.size()-1; i++)
-	{
-		node_list[i].next_node = &node_list[i + 1];
-	}
-	link_node* new_head = &node_list[0];
-	head_list.push_back(new_head);
-}
 void identify_straight_CNT_at_boundary(vec3D p1, vec3D p2, vector<int> &index, double lx, double ly, double lz)
 {
 	double eps = 1e-10;
@@ -422,16 +406,16 @@ void identify_straight_CNT_at_boundary(vec3D p1, vec3D p2, vector<int> &index, d
 		index[i] = 0;
 	}
 	if (abs(p1.x) < eps) index[0] = 1;
-	if (abs(p1.x-lx) < eps) index[1] = 1;
-	if (abs(p1.y) < eps) index[2] = 1;
-	if (abs(p1.y - ly) < eps) index[3] = 1;
-	if (abs(p1.z) < eps) index[4] = 1;
+	if (abs(p1.y) < eps) index[1] = 1;
+	if (abs(p1.z) < eps) index[2] = 1;
+	if (abs(p1.x - lx) < eps) index[3] = 1;
+	if (abs(p1.y - ly) < eps) index[4] = 1;
 	if (abs(p1.z - lz) < eps) index[5] = 1;
 	if (abs(p2.x) < eps) index[6] = 1;
-	if (abs(p2.x - lx) < eps) index[7] = 1;
-	if (abs(p2.y) < eps) index[8] = 1;
-	if (abs(p2.y - ly) < eps) index[9] = 1;
-	if (abs(p2.z) < eps) index[10] = 1;
+	if (abs(p2.y) < eps) index[7] = 1;
+	if (abs(p2.z) < eps) index[8] = 1;
+	if (abs(p2.x - lx) < eps) index[9] = 1;
+	if (abs(p2.y - ly) < eps) index[10] = 1;
 	if (abs(p2.z - lz) < eps) index[11] = 1;
 	return;
 }

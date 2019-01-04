@@ -215,10 +215,3 @@ int local_node_id(int i, int j, int k)
 		return 3 + 4 * k;
 	}
 }
-link_node::link_node(vec3D coor)
-{
-	pos = coor;
-	state = -3;
-	pre_node = NULL;
-	next_node = NULL;
-}
