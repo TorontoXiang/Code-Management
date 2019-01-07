@@ -14,7 +14,7 @@ public:
 private:
 	Tgrid_Polymer _grid_Polymer;
 	int _num_CNT;
-	vector<Tgrid_CNT> _CNT_list;
+	vector<Tgrid_CNT_base*> _CNT_list;
 	double _strain_min, _strain_max;
 	int _strain_interval;
 	int _analysis_type;   //0-mechanical analysis;1-electro-mechanical analysis

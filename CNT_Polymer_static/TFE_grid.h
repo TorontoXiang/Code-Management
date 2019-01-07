@@ -52,7 +52,7 @@ protected:
 	void detect_boundary_cells();
 	//Find the cells connect to node with boundary condition
 };
-class Tgrid_CNT;
+class Tgrid_CNT_base;
 class Tgrid_Polymer : public Tgrid
 {
 public:
@@ -68,11 +68,11 @@ public:
 	//Calculate the reacting force of each constraint
 	void calculate_load_from_constraint();
 	//Calculate _load_constraint
-	void assemble_reacting_froce_from_CNT(Tgrid_CNT* grid_CNT);
+	void assemble_reacting_froce_from_CNT(Tgrid_CNT_base* grid_CNT);
 	//Assemble the reacting force from CNT
 
 	//Functions for CG iteration
-	void assemble_Fp(Tgrid_CNT* grid_CNT);
+	void assemble_Fp(Tgrid_CNT_base* grid_CNT);
 	//Assemble the Fp from a CNT grid
 	void calculate_cell_p(int cell_id, double(&p_cell)[8][3]);
 	//Calculate cell p in CG iteration
@@ -105,45 +105,90 @@ protected:
 	//Calculate iK and jK of the stifness matrix
 	void assemble_equations();
 	//Assemble the equations: calculate K matrix
+
 	friend class Tgrid_CNT;
+	friend class Tgrid_CNT_base;
 };
-class Tgrid_CNT : public Tgrid
+class Tgrid_CNT_base : public Tgrid
 {
 public:
-	Tgrid_CNT() {};
-	void Create_MKL_solver();
-	//Create the MKL solver and do the numerical factorization
+	Tgrid_CNT_base() {};
+
 	void Input_CNT(Skeyword& keyword);
 	//Generate this CNT from keyword
 	void calculate_CNT_location(Tgrid_Polymer* grid_polymer);
 	//Calculate the location of the surface node the CNT grid
-	void calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer,double ratio=1.0);
+	void calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer, double ratio = 1.0);
 	//Calculate the boundary displacement of a CNT
 	void calculate_CNT_boundary_p(Tgrid_Polymer* grid_polymer);
 	//Calculate the boundary p a CNT in CG_iteration
-	void Solving_equilibrium_equation();
-	//Solving the equilibrium equation (The RHS is only the load from constraint)
 	void calculate_reacting_force();
 	//Calculate the reacting force of each constraint
-	void calculate_load_from_constraint();
-	//Calculate _load_constraint
 	void output_tecplot(ofstream& output);
 	//Output the results of CNT
-protected:
-	void detect_boundary_nodes();
-	//Detect the boundary nodes of the CNT
+	virtual void calculate_load_from_constraint()=0;
+	//Calculate _load_constraint
+	virtual void Solving_equilibrium_equation()=0;
+	//Solving the equilibrium equation (The RHS is only the load from constraint)
+	virtual void Create_MKL_solver()=0;
+	//Create the MKL solver and do the numerical factorization
 
-	TMKL_solver MKL_solver;                 //The MKL solver for this grid
+protected:
 	double* _dis_whole;                      //The displacement of all
 
 	int* _iKB;
 	int* _jKB;
-	double* _KB;                           //The sparse matrix for calculating the reacting force
+	double* _KB;                           //The sparse matrix for calculating the reacting forcez
 
-	void calculate_iK_jK();
+	virtual void detect_boundary_nodes()=0;
+	//Detect the boundary nodes of the CNT
+	virtual void calculate_iK_jK()=0;
 	//Calculate iK and jK of the stifness matrix
 	void assemble_equations();
 	//Assemble the equations: calculate K and KB matrix
+
 	friend class Tgrid_Polymer;
+};
+class Tgrid_CNT : public Tgrid_CNT_base
+{
+public:
+	Tgrid_CNT() {};
+	virtual void calculate_load_from_constraint();
+	//Calculate _load_constraint
+	virtual void Solving_equilibrium_equation();
+	//Solving the equilibrium equation (The RHS is only the load from constraint)
+	virtual void Create_MKL_solver();
+	//Create the MKL solver and do the numerical factorization
+protected:
+
+	TMKL_solver MKL_solver;                 //The MKL solver for this grid
+
+	virtual void detect_boundary_nodes();
+	//Detect the boundary nodes of the CNT
+	virtual void calculate_iK_jK();
+	//Calculate iK and jK of the stifness matrix
+	//void assemble_equations();
+	//Assemble the equations: calculate K and KB matrix
+
+	friend class Tgrid_Polymer;
+};
+class Tgrid_CNT_T : public Tgrid_CNT_base
+{
+public:
+	Tgrid_CNT_T() {};
+	virtual void calculate_load_from_constraint() { return; };
+	//Calculate _load_constraint (no need in Tgrid_CNT_T)
+	virtual void Solving_equilibrium_equation() { return; };
+	//Solving the equilibrium equation (The RHS is only the load from constraint) (no need in Tgrid_CNT_T)
+	virtual void Create_MKL_solver();
+	//Create the MKL solver and do the numerical factorization
+protected:
+	virtual void detect_boundary_nodes();
+	//Detect the boundary nodes of the CNT (All nodes are boundary nodes in Tgrid_CNT_T)
+	virtual void calculate_iK_jK();
+	//Calculate iK and jK of the stifness matrix (Only calculate _iKB,_jKB,_KB)
+
+	friend class Tgrid_Polymer;
+
 };
 #endif

@@ -55,6 +55,8 @@ protected:
 	friend class Tgrid;
 	friend class Tgrid_CNT;
 	friend class Tgrid_Polymer;
+	friend class Tgrid_CNT_base;
+	friend class Tgrid_CNT_T;
 };
 #endif
 

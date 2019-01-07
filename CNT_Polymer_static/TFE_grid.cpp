@@ -79,7 +79,7 @@ void Tgrid_Polymer::assemble_equations()
 	}
 	return;
 }
-void Tgrid_CNT::assemble_equations()
+void Tgrid_CNT_base::assemble_equations()
 {
 	double Ke[24][24];
 	int LM[24];
@@ -468,7 +468,7 @@ void Tgrid_Polymer::apply_regular_bc(Sregular_grid_bc& bc)
 	}
 	return;
 }
-void Tgrid_CNT::Input_CNT(Skeyword& keyword)
+void Tgrid_CNT_base::Input_CNT(Skeyword& keyword)
 {
 	_nume = keyword.cell_8_list.size();
 	_nump = keyword.node_list.size();
@@ -504,7 +504,7 @@ void Tgrid_CNT::Input_CNT(Skeyword& keyword)
 		_mat_list[i]._mu = keyword.material_list[i].Possion;
 	}
 	detect_boundary_nodes();
-	detect_boundary_cells();
+	//detect_boundary_cells();
 	return;
 }
 void Tgrid_CNT::detect_boundary_nodes()
@@ -687,7 +687,7 @@ void Tgrid_Polymer::calculate_reacting_force()
 	}
 	return;
 }
-void Tgrid_CNT::calculate_reacting_force()
+void Tgrid_CNT_base::calculate_reacting_force()
 {
 	for (int i = 0; i < 3*_nump; i++)
 	{
@@ -841,22 +841,6 @@ void Tgrid_CNT::calculate_load_from_constraint()
 	}
 	char uplo = 't';
 	int m = _nump * 3;
-	//for (int i = 0; i < m; i++)
-	//{
-	//	if (isnan(_dis_whole[i]))
-	//	{
-	//		cout << "nan occur in _dis_whole" << endl;
-	//		system("Pause");
-	//	}
-	//}
-	//for (int i = 0; i < m; i++)
-	//{
-	//	if (isnan(_reacting_force[i]))
-	//	{
-	//		cout << "nan occur in _dis_whole" << endl;
-	//		system("Pause");
-	//	}
-	//}
 	mkl_dcsrgemv(&uplo, &m, _KB, _iKB, _jKB, _dis_whole, _reacting_force);
 	for (int i = 0; i < _nump; i++)
 	{
@@ -866,24 +850,12 @@ void Tgrid_CNT::calculate_load_from_constraint()
 			if (freedom_id>0)
 			{
 				_p[freedom_id - 1] = -_reacting_force[3 * i + j];
-				//if (isnan(_p[freedom_id - 1]))
-				//{
-				//	cout << "nan occur in calculate_load_from_constraint()" << endl;
-				//	ofstream output;
-				//	output.open("_KB.k");
-				//	int num_non_zero = _iKB[m] - 1;
-				//	for (int i = 0; i < num_non_zero; i++)
-				//	{
-				//		output << _KB[i] << endl;
-				//	}
-				//	system("Pause");
-				//}
 			}
 		}
 	}
 	return;
 }
-void Tgrid_CNT::calculate_CNT_location(Tgrid_Polymer* grid_polymer)
+void Tgrid_CNT_base::calculate_CNT_location(Tgrid_Polymer* grid_polymer)
 {
 	double x_min[3], x_max[3], interval[3];
 	int nx_max, ny_max, nz_max;
@@ -900,7 +872,7 @@ void Tgrid_CNT::calculate_CNT_location(Tgrid_Polymer* grid_polymer)
 	}
 	return;
 }
-void Tgrid_CNT::calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer,double ratio)
+void Tgrid_CNT_base::calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer,double ratio)
 {
 	for (int i = 0; i < _nump; i++)
 	{
@@ -923,7 +895,7 @@ void Tgrid_CNT::calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer,
 		}
 	}
 }
-void Tgrid_Polymer::assemble_Fp(Tgrid_CNT* grid_CNT)
+void Tgrid_Polymer::assemble_Fp(Tgrid_CNT_base* grid_CNT)
 {
 	int nump_CNT = grid_CNT->_nump;
 	for (int i = 0; i < nump_CNT; i++)
@@ -957,7 +929,7 @@ void Tgrid_Polymer::assemble_Fp(Tgrid_CNT* grid_CNT)
 	}
 	return;
 }
-void Tgrid_Polymer::assemble_reacting_froce_from_CNT(Tgrid_CNT* grid_CNT)
+void Tgrid_Polymer::assemble_reacting_froce_from_CNT(Tgrid_CNT_base* grid_CNT)
 {
 	int nump_CNT = grid_CNT->_nump;
 	for (int i = 0; i < nump_CNT; i++)
@@ -1050,7 +1022,7 @@ void Tgrid_Polymer::CG_update()
 	}
 	return;
 }
-void Tgrid_CNT::calculate_CNT_boundary_p(Tgrid_Polymer* grid_polymer)
+void Tgrid_CNT_base::calculate_CNT_boundary_p(Tgrid_Polymer* grid_polymer)
 {
 	for (int i = 0; i < _nump; i++)
 	{
@@ -1099,24 +1071,13 @@ double Tgrid_Polymer::calculate_diff()
 }
 void Tgrid_Polymer::CG_initialization()
 {
-	//ofstream output1, output2;
-	//output1.open("_p.k");
-	//output2.open("_f.k");
 	for (int i = 0; i < _num_freedom_degree; i++)
 	{
 		_r[i] = _p[i]+_F0[i];
-		//if (isnan(_p[i]))
-		//{
-		//	output1 << i << " " << _p[i] << endl;
-		//}
-		//if (isnan(_F0[i]))
-		//{
-		//	output2 << i << " " << _F0[i] << endl;
-		//}
 		_p[i] = _r[i];
 	}
 }
-void Tgrid_CNT::output_tecplot(ofstream& output)
+void Tgrid_CNT_base::output_tecplot(ofstream& output)
 {
 	//Calculate cell stress
 	Sstress** cell_stress;
@@ -1188,5 +1149,57 @@ void Tgrid_CNT::output_tecplot(ofstream& output)
 		delete pos[i];
 	}
 	delete pos;
+	return;
+}
+void Tgrid_CNT_T::detect_boundary_nodes()
+{
+	for (int i = 0; i < _nump; i++)
+	{
+		_node_list[i]._is_surface = true;
+		_node_list[i]._bc[0] = _node_list[i]._bc[1] = _node_list[i]._bc[2] = 1;
+	}
+	return;
+}
+void Tgrid_CNT_T::calculate_iK_jK()
+{
+	vector<vector<int>> IEN;
+	IEN.resize(_nume);
+	for (int i = 0; i < _nume; i++)
+	{
+		IEN[i].resize(8);
+		for (int j = 0; j < 8; j++)
+		{
+			IEN[i][j] = _cell_list[i]._node_ptr[j]->_id;
+		}
+	}
+	//Calculate the sparse matrix structure for solving the equilibrium equation (KII)
+	int num_non_zero;
+	//calculate_matrix_structure_KII(_ID, IEN, _num_freedom_degree, 3, _iK, _jK, num_non_zero);
+	//_K = new double[num_non_zero];
+	//for (int i = 0; i < num_non_zero; i++)
+	//{
+	//	_K[i] = 0;
+	//}
+	//Calculate the sparse matrix structure for calculating the racting force (KB)
+	calculate_matrix_structure_KB(_ID, IEN, 3 * _nump, 3, _iKB, _jKB, num_non_zero);
+	_KB = new double[num_non_zero];
+	for (int i = 0; i < num_non_zero; i++)
+	{
+		_KB[i] = 0;
+	}
+	//Allocate memory for reacting froce
+	_reacting_force = new double[3 * _nump];
+	_dis_whole = new double[3 * _nump];
+	for (int i = 0; i < 3 * _nump; i++)
+	{
+		_reacting_force[i] = _dis_whole[i] = 0;
+	}
+	return;
+}
+void Tgrid_CNT_T::Create_MKL_solver()
+{
+	calculate_ID();
+	calculate_iK_jK();
+	assemble_equations();
 	return;
 }
