@@ -322,9 +322,11 @@ double TCNT_net::Calculate_effective_resistance(string positive_face, string neg
 	Modified_Node_Analysis.input_resistance_net(_resistance_net);
 	Modified_Node_Analysis.Generate_Sparse_Matrix();
 	double effective_R = Modified_Node_Analysis.Calculate_effective_resistance();
+	double lx, ly, lz; 
+	lx = ly = lz = 67.335e-9;
 	if (output_control==0)
 	{
-		cout << "The effective resistance of the CNT net is: " << abs(effective_R) << endl;
+		cout << "The effective conductivity of the CNT net is: " <<  lx / (ly*lz*abs(effective_R)) << endl;
 	}
 	return effective_R;
 }

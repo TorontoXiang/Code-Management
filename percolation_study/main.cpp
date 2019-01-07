@@ -21,7 +21,7 @@ int main()
 	int num_test=100;
 	ofstream output;
 	output.open("R_list.k");
-	for (int j = 0; j < 20; j++)
+	for (int j = 0; j < 50; j++)
 	{
 		double fraction = (j + 1)*0.0005;
 		CNT_net_generator.S_fraciton(fraction);
@@ -41,7 +41,7 @@ int main()
 		}
 		double S_average = S_total / num_test;
 		cout << fraction << " " << S_average << endl;
-		//output << fraction << " " << S << endl;
+		output << fraction << " " << S_average << endl;
 	}
 
 	system("Pause");
