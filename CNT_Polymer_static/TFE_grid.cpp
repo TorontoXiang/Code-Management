@@ -230,7 +230,7 @@ Sstress** Tgrid::Calculate_cell_stress()
 	}
 	return cell_stress;
 }
-void Tgrid::calculate_cell_displacement(int cell_id,double(&d_cell)[8][3])
+void Tgrid::calculate_cell_displacement(int cell_id,double(&d_cell)[8][3],double ratio)
 {
 	int node_id;
 	for (int i = 0; i < 8; i++)
@@ -240,11 +240,11 @@ void Tgrid::calculate_cell_displacement(int cell_id,double(&d_cell)[8][3])
 		{
 			if (_ID[3 * node_id + j] > 0)
 			{
-				d_cell[i][j] = _dis[_ID[3 * node_id + j] - 1];
+				d_cell[i][j] = _dis[_ID[3 * node_id + j] - 1]*ratio;
 			}
 			else if (_ID[3 * node_id + j] < 0)
 			{
-				d_cell[i][j] = _node_list[node_id]._bc_value[j];
+				d_cell[i][j] = _node_list[node_id]._bc_value[j]*ratio;
 			}
 		}
 	}
@@ -900,7 +900,7 @@ void Tgrid_CNT::calculate_CNT_location(Tgrid_Polymer* grid_polymer)
 	}
 	return;
 }
-void Tgrid_CNT::calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer)
+void Tgrid_CNT::calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer,double ratio)
 {
 	for (int i = 0; i < _nump; i++)
 	{
@@ -912,7 +912,7 @@ void Tgrid_CNT::calculate_CNT_boundary_displacement(Tgrid_Polymer* grid_polymer)
 			double eta = _node_list[i]._location->iso_coor[1];
 			double zeta = _node_list[i]._location->iso_coor[2];
 			double cell_d[8][3];
-			grid_polymer->calculate_cell_displacement(cell_id, cell_d);
+			grid_polymer->calculate_cell_displacement(cell_id, cell_d, ratio);
 			for (int j = 0; j < 8; j++)
 			{
 				double Nj = N_brick_8(j, xi, eta, zeta);

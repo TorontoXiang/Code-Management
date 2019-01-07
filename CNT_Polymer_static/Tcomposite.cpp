@@ -1,6 +1,16 @@
 #include "Tcomposite.h"
 void Tcomposite::Input()
 {
+	//Input the information of the analysis
+	ifstream input;
+	input.open("AnalysisControl.k");
+	input >> _analysis_type;
+	if (_analysis_type==1)
+	{
+		input >> _strain_min >> _strain_max >> _strain_interval;
+	}
+	Cout_analysis_type();
+	//Input the CNT and polymer information
 	_grid_Polymer.Input_Polymer();
 	_grid_Polymer.Calculate_stiffness_matrix();
 	cout << "Input CNT" << endl;
@@ -49,33 +59,61 @@ void Tcomposite::CG_iteration()
 }
 void Tcomposite::output_result()
 {
-	_grid_Polymer.Output_Tecplot("Polymer.dat");
-	ofstream output;
-	output.open("CNT.dat");
-	for (int i = 0; i < _num_CNT; i++)
+	if (_analysis_type==0)     //Results of the mechanical analysis
 	{
-		_CNT_list[i].calculate_CNT_boundary_displacement(&_grid_Polymer);
-		_CNT_list[i].calculate_load_from_constraint();
-		_CNT_list[i].Solving_equilibrium_equation();
-		_CNT_list[i].output_tecplot(output);
+		cout << "Output the results for mechanical analysis..." << endl;
+		_grid_Polymer.Output_Tecplot("Polymer.dat");
+		ofstream output;
+		output.open("CNT.dat");
+		for (int i = 0; i < _num_CNT; i++)
+		{
+			_CNT_list[i].calculate_CNT_boundary_displacement(&_grid_Polymer);
+			_CNT_list[i].calculate_load_from_constraint();
+			_CNT_list[i].Solving_equilibrium_equation();
+			_CNT_list[i].output_tecplot(output);
+		}
+		//Output the external load
+		ofstream output_force;
+		output_force.open("Racting_force.k");
+		Calculate_reacting_force();
+		vec3D external_force1, external_force2;
+		external_force1 = _grid_Polymer.calculate_external_load("x_min");
+		external_force2 = _grid_Polymer.calculate_external_load("x_max");
+		output_force << "External force at x_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
+		output_force << "External force at x_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
+		external_force1 = _grid_Polymer.calculate_external_load("y_min");
+		external_force2 = _grid_Polymer.calculate_external_load("y_max");
+		output_force << "External force at y_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
+		output_force << "External force at y_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
+		external_force1 = _grid_Polymer.calculate_external_load("z_min");
+		external_force2 = _grid_Polymer.calculate_external_load("z_max");
+		output_force << "External force at z_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
+		output_force << "External force at z_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
 	}
-	//Output the external load
-	ofstream output_force;
-	output_force.open("Racting_force.k");
-	Calculate_reacting_force();
-	vec3D external_force1, external_force2;
-	external_force1 = _grid_Polymer.calculate_external_load("x_min");
-	external_force2 = _grid_Polymer.calculate_external_load("x_max");
-	output_force << "External force at x_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
-	output_force << "External force at x_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
-	external_force1 = _grid_Polymer.calculate_external_load("y_min");
-	external_force2 = _grid_Polymer.calculate_external_load("y_max");
-	output_force << "External force at y_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
-	output_force << "External force at y_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
-	external_force1 = _grid_Polymer.calculate_external_load("z_min");
-	external_force2 = _grid_Polymer.calculate_external_load("z_max");
-	output_force << "External force at z_min is: " << external_force1.x << " " << external_force1.y << " " << external_force1.z << endl;
-	output_force << "External force at z_max is: " << external_force2.x << " " << external_force2.y << " " << external_force2.z << endl;
+	else if (_analysis_type==1)  //Output the CNT networks at diffetent strain
+	{
+		cout << "Output the CNT networks at different strain..." << endl;
+		for (int i = 0; i < _strain_interval + 1; i++)
+		{
+			ofstream output;
+			double ratio = _strain_min + (_strain_max - _strain_min)*i / _strain_interval;
+			output.open(std::to_string(ratio) + ".dat");
+			for (int j = 0; j < _num_CNT; j++)
+			{
+				_CNT_list[j].calculate_CNT_boundary_displacement(&_grid_Polymer, ratio);
+				_CNT_list[j].calculate_load_from_constraint();
+				_CNT_list[j].Solving_equilibrium_equation();
+				_CNT_list[j].output_tecplot(output);
+			}
+			output.close();
+		}
+	}
+	else
+	{
+		cout << "Invalid analysis type!" << endl;
+		system("Pause");
+		exit(0);
+	}
 }
 void Tcomposite::CG_iteration_initialization()
 {
@@ -174,5 +212,23 @@ void Tcomposite::Calculate_reacting_force()
 		_CNT_list[i].Solving_equilibrium_equation();
 		_CNT_list[i].calculate_reacting_force();
 		_grid_Polymer.assemble_reacting_froce_from_CNT(&_CNT_list[i]);
+	}
+}
+void Tcomposite::Cout_analysis_type()
+{
+	if (_analysis_type==0)
+	{
+		cout << "Mechanical Analysis..." << endl;
+	}
+	else if (_analysis_type==1)
+	{
+		cout << "Electro-Mechanical Analysis..." << endl;
+		cout << "Strain ratio from " << _strain_min << " to " << _strain_max << " in " << _strain_interval << " intervals" << endl;
+	}
+	else
+	{
+		cout << "Error: Invalid analysis type!!!" << endl;
+		system("Pause");
+		exit(0);
 	}
 }
