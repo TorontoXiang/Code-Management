@@ -3,8 +3,9 @@ void Tcomposite::Input()
 {
 	//Input the information of the analysis
 	ifstream input;
+	int EFE_type=10;
 	input.open("AnalysisControl.k");
-	input >> _analysis_type;
+	input >> _analysis_type>>EFE_type;
 	if (_analysis_type==1)
 	{
 		input >> _strain_min >> _strain_max >> _strain_interval;
@@ -14,7 +15,7 @@ void Tcomposite::Input()
 	_grid_Polymer.Input_Polymer();
 	_grid_Polymer.Calculate_stiffness_matrix();
 	cout << "Input CNT" << endl;
-	input_CNT_list();
+	input_CNT_list(EFE_type);
 }
 void Tcomposite::Calculate_Fp()
 {
@@ -122,7 +123,7 @@ void Tcomposite::CG_iteration_initialization()
 	_grid_Polymer.calculate_load_from_constraint();
 	_grid_Polymer.CG_initialization();
 }
-void Tcomposite::input_CNT_list()
+void Tcomposite::input_CNT_list(int type)
 {
 	ifstream input;
 	input.open("CNT_grid.k");
@@ -192,7 +193,20 @@ void Tcomposite::input_CNT_list()
 	int num_CNT_element = 0,num_CNT_node = 0;
 	for (int i = 0; i < _num_CNT; i++)
 	{
-		_CNT_list[i] = new Tgrid_CNT_T;
+		if (type == 0)
+		{
+			_CNT_list[i] = new Tgrid_CNT;
+		}
+		else if (type == 1)
+		{
+			_CNT_list[i] = new Tgrid_CNT_T;
+		}
+		else
+		{
+			cout << "Invalid EFE algorithm type" << endl;
+			system("Pause");
+			exit(0);
+		}
 		_CNT_list[i]->Input_CNT(keyword_list[i]);
 		_CNT_list[i]->Create_MKL_solver();
 		_CNT_list[i]->calculate_CNT_location(&_grid_Polymer);

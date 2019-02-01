@@ -303,96 +303,8 @@ void TCNT_net_generator::Create_straight_CNT_net(vector<vector<vec3D>> &CNT_net,
 	bool is_in = false;
 	for (int i = 0; i < p1_list.size(); i++)
 	{
-		is_in = true;
-		//x direction cutting
 		x1 = p1_list[i], x2 = p2_list[i];
-		double ratio;
-		if (x1.x < 0 && x2.x < 0)
-		{
-			is_in = false;
-		}
-		else if (x1.x < 0 && x2.x >= 0)
-		{
-			ratio = -x2.x / (x1.x - x2.x);
-			x1 = x2 + (x1 - x2)*ratio;
-		}
-		else if (x1.x >= 0 && x2.x < 0)
-		{
-			ratio = -x2.x / (x1.x - x2.x);
-			x2 = x2 + (x1 - x2)*ratio;
-		}
-		if (x1.x > _lx && x2.x > _lx)
-		{
-			is_in = false;
-		}
-		else if (x1.x <= _lx && x2.x > _lx)
-		{
-			ratio = (_lx - x2.x) / (x1.x - x2.x);
-			x2 = x2 + (x1 - x2)*ratio;
-		}
-		else if (x1.x > _lx && x2.x <= _lx)
-		{
-			ratio = (_lx - x2.x) / (x1.x - x2.x);
-			x1 = x2 + (x1 - x2)*ratio;
-		}
-		//y direction cutting
-		if (x1.y < 0 && x2.y < 0)
-		{
-			is_in = false;
-		}
-		else if (x1.y < 0 && x2.y >= 0)
-		{
-			ratio = -x2.y / (x1.y - x2.y);
-			x1 = x2 + (x1 - x2)*ratio;
-		}
-		else if (x1.y >= 0 && x2.y < 0)
-		{
-			ratio = -x2.y / (x1.y - x2.y);
-			x2 = x2 + (x1 - x2)*ratio;
-		}
-		if (x1.y > _ly && x2.y > _ly)
-		{
-			is_in = false;
-		}
-		else if (x1.y <= _ly && x2.y > _ly)
-		{
-			ratio = (_ly - x2.y) / (x1.y - x2.y);
-			x2 = x2 + (x1 - x2)*ratio;
-		}
-		else if (x1.y > _ly && x2.y <= _ly)
-		{
-			ratio = (_ly - x2.y) / (x1.y - x2.y);
-			x1 = x2 + (x1 - x2)*ratio;
-		}
-		//z direction cutting
-		if (x1.z < 0 && x2.z < 0)
-		{
-			is_in = false;
-		}
-		else if (x1.z < 0 && x2.z >= 0)
-		{
-			ratio = -x2.z / (x1.z - x2.z);
-			x1 = x2 + (x1 - x2)*ratio;
-		}
-		else if (x1.z >= 0 && x2.z < 0)
-		{
-			ratio = -x2.z / (x1.z - x2.z);
-			x2 = x2 + (x1 - x2)*ratio;
-		}
-		if (x1.z > _lz && x2.z > _lz)
-		{
-			is_in = false;
-		}
-		else if (x1.z <= _lz && x2.z > _lz)
-		{
-			ratio = (_lz - x2.z) / (x1.z - x2.z);
-			x2 = x2 + (x1 - x2)*ratio;
-		}
-		else if (x1.z > _lz && x2.z <= _lz)
-		{
-			ratio = (_lz - x2.z) / (x1.z - x2.z);
-			x1 = x2 + (x1 - x2)*ratio;
-		}
+		Clipping_straight_CNT(x1, x2, is_in);
 		if (is_in)
 		{
 			CNT_list1.push_back(x1), CNT_list2.push_back(x2);
@@ -411,6 +323,128 @@ void TCNT_net_generator::Create_straight_CNT_net(vector<vector<vec3D>> &CNT_net,
 			node_list.push_back(pos);
 		}
 		identify_straight_CNT_at_boundary(CNT_list1[i], CNT_list2[i], index, _lx, _ly, _lz);
+		CNT_net.push_back(node_list);
+		bc_Info.push_back(index);
+	}
+	return;
+}
+void TCNT_net_generator::Create_straight_CNT_net_advanced(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info, int output_control)
+{
+	vec3D x_min[3][3][3];
+	//Create the minimal coordinate of the 27 boxes
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				x_min[i][j][k].value((i - 1)*_lx, (j - 1)*_ly, (k - 1)*_lz);
+			}
+		}
+	}
+	double volume_CNT = 0.25*_d_CNT*_d_CNT*pi*_l_CNT;
+	int num_target = int(_lx * _ly*_lz*_volume_fraction / volume_CNT);
+	int num_input = 0;
+	vector<vec3D> p1_list, p2_list;
+	vec3D dx, dl;
+	double phy, theta;
+	double pi = 3.141592654;
+	bool is_survive;
+	srand((int)time(0));
+	while (num_input < num_target)
+	{
+		dx.value(_lx*rand() / RAND_MAX, _ly*rand() / RAND_MAX, _lz*rand() / RAND_MAX);
+		phy = 2 * pi*rand() / RAND_MAX;
+		double c_theta = 1.0*rand() / RAND_MAX;
+		theta = acos(c_theta);
+		dl.value(_l_CNT*sin(theta)*cos(phy), _l_CNT*sin(theta)*sin(phy), _l_CNT*c_theta);
+		is_survive = true;
+		vector<vec3D> p1_trial_list;
+		vector<vec3D> p2_trial_list;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+					if (is_survive)
+					{
+						vec3D p1_trial = x_min[i][j][k] + dx;
+						vec3D p2_trial = x_min[i][j][k] + dx + dl;
+						bool is_in=true;
+						Clipping_straight_CNT(p1_trial, p2_trial, is_in);
+						if (is_in)
+						{
+							for (int l = 0; l < p1_list.size(); l++)
+							{
+								if (min_dis(p1_trial, p2_trial, p1_list[l], p2_list[l]) <= _d_CNT + _d_VDW)
+								{
+									is_survive = false;
+								}
+							}
+							if (is_survive)
+							{
+								p1_trial_list.push_back(p1_trial);
+								p2_trial_list.push_back(p2_trial);
+							}
+						}
+					}
+				}
+			}
+		}
+		if (is_survive)
+		{
+			for (int i = 0; i < p1_trial_list.size(); i++)
+			{
+				p1_list.push_back(p1_trial_list[i]);
+				p2_list.push_back(p2_trial_list[i]);
+			}
+			num_input = num_input + 1;
+			if (output_control == 0)
+			{
+				if (num_input == 1)
+				{
+					cout << setw(4) << 100 * num_input / num_target << "%";
+				}
+				else
+				{
+					cout << '\b' << '\b' << '\b' << '\b' << '\b';
+					cout << setw(4) << 100 * num_input / num_target << "%";
+				}
+			}
+		}
+	}
+	if (output_control == 0)
+	{
+		cout << endl;
+	}
+	//vec3D x1, x2;
+	//vector<vec3D> CNT_list1, CNT_list2;
+	//vec3D* ptr1 = NULL;
+	//vec3D* ptr2 = NULL;
+	//bool is_in = false;
+	//for (int i = 0; i < p1_list.size(); i++)
+	//{
+	//	x1 = p1_list[i], x2 = p2_list[i];
+	//	Clipping_straight_CNT(x1, x2, is_in);
+	//	if (is_in)
+	//	{
+	//		CNT_list1.push_back(x1), CNT_list2.push_back(x2);
+	//	}
+	//}
+	double size_l = _l_CNT / _n_divided;
+	for (int i = 0; i < p1_list.size(); i++)
+	{
+		double l = (p1_list[i] - p2_list[i]).get_length();
+		int N_segment = int(l / size_l) + 2;
+		vector<vec3D> node_list;
+		vector<int> index;
+		for (int j = 0; j < N_segment + 1; j++)
+		{
+			vec3D pos = p1_list[i] + (p2_list[i] - p1_list[i])*j / N_segment;
+			node_list.push_back(pos);
+		}
+		identify_straight_CNT_at_boundary(p1_list[i], p2_list[i], index, _lx, _ly, _lz);
 		CNT_net.push_back(node_list);
 		bc_Info.push_back(index);
 	}
@@ -626,20 +660,119 @@ void TCNT_net_generator::Create_wavy_CNT_net(vector<vector<vec3D>> &CNT_net, vec
 			CNT_net[i][1] = pos;
 		}
 	}
-	//cout << "Distance check" << endl;
-	//cout << "The number of effective curve is " << CNT_net.size() << endl;
-	//for (int i = 0; i < CNT_net.size(); i++)
+}
+void TCNT_net_generator::Create_wavy_CNT_net_advanced(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info, int output_control)
+{
+	vec3D x_min[3][3][3];
+	//Create the minimal coordinate of the 27 boxes
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				x_min[i][j][k].value((i - 1)*_lx, (j - 1)*_ly, (k - 1)*_lz);
+			}
+		}
+	}
+	int num_input = 0;
+	double volume_CNT = 0.25*_d_CNT*_d_CNT*pi*_l_CNT;
+	int num_target = int(_lx * _ly*_lz*_volume_fraction / volume_CNT);
+	//vector<vector<vec3D>> curve_list;
+	vec3D p_begin;
+	srand((int)time(0));
+	bool is_survive;
+	while (num_input < num_target)
+	{
+		p_begin.value(_lx*rand() / RAND_MAX, _ly*rand() / RAND_MAX, _lz*rand() / RAND_MAX);
+		vector<vec3D> new_curve = Generate_wavy_CNT(p_begin, _curvature_ratio, _n_divided, _l_CNT);
+		is_survive = true;
+		vector<vector<vec3D>> sub_CNT_list;
+		vector<vector<int>> sub_bc_info_list;
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				for (int k = 0; k < 3; k++)
+				{
+					if (is_survive)
+					{
+						vector<vec3D> trial_CNT = new_curve;
+						move_curve(trial_CNT, x_min[i][j][k]);
+						vector<vector<vec3D>> sub_CNT;
+						vector<vector<int>> sub_bc_Info;
+						Clipping_curved_CNT(trial_CNT, sub_CNT, sub_bc_Info);
+						for (int l = 0; l < sub_CNT.size(); l++)
+						{
+							for (int  m = 0; m < CNT_net.size(); i++)
+							{
+								if (!is_curve_valid(sub_CNT[l], CNT_net[m], _d_CNT + _d_VDW))
+								{
+									is_survive = false;
+								}
+							}
+						}
+						if (is_survive)
+						{
+							for (int l = 0; l < sub_CNT.size(); l++)
+							{
+								sub_CNT_list.push_back(sub_CNT[l]);
+								sub_bc_info_list.push_back(sub_bc_Info[l]);
+							}
+						}
+					}
+				}
+			}
+		}
+		if (is_survive)
+		{
+			for (int i = 0; i < sub_CNT_list.size(); i++)
+			{
+				CNT_net.push_back(sub_CNT_list[i]);
+				bc_Info.push_back(sub_bc_info_list[i]);
+			}
+			num_input = num_input + 1;
+			if (output_control == 0)
+			{
+				if (num_input == 1)
+				{
+					cout << setw(4) << 100 * num_input / num_target << "%";
+				}
+				else
+				{
+					cout << '\b' << '\b' << '\b' << '\b' << '\b';
+					cout << setw(4) << 100 * num_input / num_target << "%";
+				}
+			}
+		}
+	}
+	if (output_control == 0)
+	{
+		cout << endl;
+		cout << "Calculate effective curve" << endl;
+	}
+	//for (int i = 0; i < curve_list.size(); i++)
 	//{
-	//	for (int j = i + 1; j < CNT_net.size(); j++)
+	//	vector<vector<vec3D>> sub_CNT;
+	//	vector<vector<int>> sub_bc_Info;
+	//	Clipping_curved_CNT(curve_list[i], sub_CNT, sub_bc_Info);
+	//	for (int j = 0; j < sub_CNT.size(); j++)
 	//	{
-	//		double dis_mini = min_curve_dis(CNT_net[i], CNT_net[j]);
-	//		if (dis_mini < _d_CNT + _d_VDW)
-	//		{
-	//			cout << "Minimal distance conflict!" << endl;
-	//			cout << i << " " << j << " " << dis_mini << endl;
-	//		}
+	//		CNT_net.push_back(sub_CNT[j]);
+	//		bc_Info.push_back(sub_bc_Info[j]);
 	//	}
 	//}
+	for (int i = 0; i < CNT_net.size(); i++)
+	{
+		if (CNT_net[i].size() == 2)
+		{
+			CNT_net[i].resize(3);
+			vec3D pos = (CNT_net[i][0] + CNT_net[i][1])*0.5;
+			CNT_net[i][2] = CNT_net[i][1];
+			CNT_net[i][1] = pos;
+		}
+	}
+	return;
 }
 void Generate_straight_CNT(vec3D p1, vec3D p2, int n_divided, double r, double l, int m, int n, ofstream& output_k, ofstream& output_tec, double E, double mu)
 {
@@ -725,7 +858,7 @@ void TCNT_net_generator::Create_CNT_net(vector<vector<vec3D>> &CNT_net, vector<v
 {
 	if (_type==0)
 	{
-		Create_straight_CNT_net(CNT_net,bc_Info,output_control);
+		Create_straight_CNT_net_advanced(CNT_net,bc_Info,output_control);
 	}
 	else if (_type==1)
 	{
@@ -893,4 +1026,103 @@ bool TCNT_net_generator::is_inside_RVE(vec3D p)
 	{
 		return false;
 	}
+}
+void TCNT_net_generator::Clipping_straight_CNT(vec3D &x1, vec3D &x2, bool &is_in)
+{
+	is_in = true;
+	//x direction cutting
+	double ratio;
+	if (x1.x < 0 && x2.x < 0)
+	{
+		is_in = false;
+		return;
+	}
+	else if (x1.x < 0 && x2.x >= 0)
+	{
+		ratio = -x2.x / (x1.x - x2.x);
+		x1 = x2 + (x1 - x2)*ratio;
+	}
+	else if (x1.x >= 0 && x2.x < 0)
+	{
+		ratio = -x2.x / (x1.x - x2.x);
+		x2 = x2 + (x1 - x2)*ratio;
+	}
+	if (x1.x > _lx && x2.x > _lx)
+	{
+		is_in = false;
+		return;
+	}
+	else if (x1.x <= _lx && x2.x > _lx)
+	{
+		ratio = (_lx - x2.x) / (x1.x - x2.x);
+		x2 = x2 + (x1 - x2)*ratio;
+	}
+	else if (x1.x > _lx && x2.x <= _lx)
+	{
+		ratio = (_lx - x2.x) / (x1.x - x2.x);
+		x1 = x2 + (x1 - x2)*ratio;
+	}
+	//y direction cutting
+	if (x1.y < 0 && x2.y < 0)
+	{
+		is_in = false;
+		return;
+	}
+	else if (x1.y < 0 && x2.y >= 0)
+	{
+		ratio = -x2.y / (x1.y - x2.y);
+		x1 = x2 + (x1 - x2)*ratio;
+	}
+	else if (x1.y >= 0 && x2.y < 0)
+	{
+		ratio = -x2.y / (x1.y - x2.y);
+		x2 = x2 + (x1 - x2)*ratio;
+	}
+	if (x1.y > _ly && x2.y > _ly)
+	{
+		is_in = false;
+		return;
+	}
+	else if (x1.y <= _ly && x2.y > _ly)
+	{
+		ratio = (_ly - x2.y) / (x1.y - x2.y);
+		x2 = x2 + (x1 - x2)*ratio;
+	}
+	else if (x1.y > _ly && x2.y <= _ly)
+	{
+		ratio = (_ly - x2.y) / (x1.y - x2.y);
+		x1 = x2 + (x1 - x2)*ratio;
+	}
+	//z direction cutting
+	if (x1.z < 0 && x2.z < 0)
+	{
+		is_in = false;
+		return;
+	}
+	else if (x1.z < 0 && x2.z >= 0)
+	{
+		ratio = -x2.z / (x1.z - x2.z);
+		x1 = x2 + (x1 - x2)*ratio;
+	}
+	else if (x1.z >= 0 && x2.z < 0)
+	{
+		ratio = -x2.z / (x1.z - x2.z);
+		x2 = x2 + (x1 - x2)*ratio;
+	}
+	if (x1.z > _lz && x2.z > _lz)
+	{
+		is_in = false;
+		return;
+	}
+	else if (x1.z <= _lz && x2.z > _lz)
+	{
+		ratio = (_lz - x2.z) / (x1.z - x2.z);
+		x2 = x2 + (x1 - x2)*ratio;
+	}
+	else if (x1.z > _lz && x2.z <= _lz)
+	{
+		ratio = (_lz - x2.z) / (x1.z - x2.z);
+		x1 = x2 + (x1 - x2)*ratio;
+	}
+	return;
 }

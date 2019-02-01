@@ -26,7 +26,7 @@ private:
 	//Calculate _Fp in _grid_Polymer
 	void Calculate_reacting_force();
 	//Calculate the reacting froce
-	void input_CNT_list();
+	void input_CNT_list(int type);
 	//Input the CNT grid
 	void Cout_analysis_type();
 	//Output the analysis type on the screen

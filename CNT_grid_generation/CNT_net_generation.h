@@ -44,9 +44,11 @@ private:
 	double _volume_fraction;    //The volume fraction of CNT in the composite
 
 	void Create_straight_CNT_net(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info,int output_control=0);
+	void Create_straight_CNT_net_advanced(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info, int output_control = 0);
 	//Create a straight CNT network (CNT_net) and the boundary information of each CNT (bc_Info)
 
 	void Create_wavy_CNT_net(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info,int output_control=0);
+	void Create_wavy_CNT_net_advanced(vector<vector<vec3D>> &CNT_net, vector<vector<int>> &bc_Info, int output_control = 0);
 	//Create a wavy CNT network (CNT_net) and the boundary information of each CNT (bc_Info)
 
 	int segment_state(vec3D p1, vec3D p2);
@@ -54,6 +56,8 @@ private:
 
 	bool is_inside_RVE(vec3D p);
 	//Whether p is inside the RVE
+
+	void Clipping_straight_CNT(vec3D &x1, vec3D &x2, bool &is_in);
 };
 void Create_straight_CNT_net(int num_CNT, double l_CNT, double lx, double ly, double lz);
 //Create a random straight CNT net
